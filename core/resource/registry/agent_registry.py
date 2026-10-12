@@ -19,35 +19,82 @@ import time
 from pathlib import Path
 
 from core.resource.registry.registry_base import BaseRegistry
+from core.resource import paths
 from core.user_context import get_current_user_id, is_visible_to, VISIBILITY_PUBLIC
 
-REGISTRY_DIR = Path(__file__).resolve().parent.parent.parent.parent / "resources" / "agents"
+
+def _write_json(path: Path, data) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
+
+
+REGISTRY_DIR = paths.BUILTIN_ROOT / "agents"
 REGISTRY_FILE = REGISTRY_DIR / "registry.json"
 
 
 class AgentRegistry(BaseRegistry):
-    """Agent 注册中心"""
+    """Agent 注册中心。
+
+    读：合并「内置」与「私有」两个目录的 registry.json（私有同 id 覆盖内置）。
+    写：新建 / 更新的 Agent 一律写入私有目录。
+    """
 
     def __init__(self):
+        paths.ensure_private_dirs("agents")
         REGISTRY_DIR.mkdir(parents=True, exist_ok=True)
         if not REGISTRY_FILE.exists():
-            self._write([])
+            _write_json(REGISTRY_FILE, [])
+
+    def _private_registry_file(self) -> Path:
+        d = paths.ensure_private_dirs("agents")
+        f = d / "registry.json"
+        if not f.exists():
+            _write_json(f, [])
+        return f
 
     def _get_spec_dir(self) -> Path:
-        """获取 MD 规范文档目录"""
-        return REGISTRY_DIR / "definitions"
+        """MD 规范文档目录（私有）——新建的规范写入此处。"""
+        return paths.ensure_private_dirs("agents") / "definitions"
 
     def _get_impl_dir(self) -> Path:
-        """获取 Agent 实现代码根目录"""
-        return REGISTRY_DIR / "implementations"
+        """实现代码根目录（私有）——新建的实现写入此处。"""
+        return paths.ensure_private_dirs("agents") / "implementations"
+
+    def get_spec_search_dirs(self) -> list[Path]:
+        """规范文档的检索目录（内置 + 私有），用于「读」时定位已有 MD。"""
+        return [root / "agents" / "definitions" for root in paths.resource_roots()]
+
+    def get_impl_search_dirs(self) -> list[Path]:
+        """实现目录的检索目录（内置 + 私有）。"""
+        return [root / "agents" / "implementations" for root in paths.resource_roots()]
 
     def _read(self) -> list[dict]:
-        with open(REGISTRY_FILE, encoding='utf-8') as f:
-            return json.load(f)
+        """合并内置与私有 registry（私有同 id 覆盖内置）。"""
+        merged: dict[str, dict] = {}
+        for root in paths.resource_roots():
+            rf = root / "agents" / "registry.json"
+            if not rf.exists():
+                continue
+            try:
+                for e in json.loads(rf.read_text(encoding="utf-8")):
+                    if isinstance(e, dict) and e.get("id"):
+                        merged[e["id"]] = e
+            except Exception:
+                continue
+        return list(merged.values())
+
+    def read_from(self, root: Path) -> list[dict]:
+        rf = root / "agents" / "registry.json"
+        if not rf.exists():
+            return []
+        try:
+            return json.loads(rf.read_text(encoding="utf-8"))
+        except Exception:
+            return []
 
     def _write(self, data: list[dict]):
-        with open(REGISTRY_FILE, "w", encoding='utf-8') as f:
-            json.dump(data, f, ensure_ascii=False, indent=2)
+        """写入私有 registry。"""
+        _write_json(self._private_registry_file(), data)
 
     async def register(self, resource: dict) -> str:
         agent_id = resource.get("id", f"agent-{int(time.time())}")

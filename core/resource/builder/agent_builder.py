@@ -43,12 +43,19 @@ from core.agent.base import BaseAgent, AgentContext
 TOOL_HELPER_TEMPLATE = '''
     def _call_tool_{tool_id_safe}(self, **params) -> dict:
         """调用工具: {tool_name} (tool_id: {tool_id})"""
-        impl_path = PROJECT_ROOT / "resources" / "tools" / "implementations" / "{tool_id}" / "tool.py"
-        if not impl_path.exists():
+        # 在「内置 + 私有」资源根中定位工具实现
+        _tool_base = None
+        for _root in (PROJECT_ROOT / "resources", PROJECT_ROOT.parent / "resources-private"):
+            _cand = _root / "tools" / "implementations" / "{tool_id}"
+            if (_cand / "tool.py").exists():
+                _tool_base = _cand
+                break
+        if _tool_base is None:
             return {{"status": "failed", "message": f"工具不存在: {tool_id}"}}
+        impl_path = _tool_base / "tool.py"
 
         code = impl_path.read_text(encoding='utf-8')
-        venv_python = PROJECT_ROOT / "resources" / "tools" / "implementations" / "{tool_id}" / ".venv" / "bin" / "python"
+        venv_python = _tool_base / ".venv" / "bin" / "python"
         python_exe = str(venv_python) if venv_python.exists() else sys.executable
 
         def _safe_dumps(obj):

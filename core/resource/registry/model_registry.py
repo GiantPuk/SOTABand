@@ -5,34 +5,75 @@ import time
 from pathlib import Path
 
 from core.resource.registry.registry_base import BaseRegistry
+from core.resource import paths
 
-MODEL_DIR = Path(__file__).resolve().parent.parent.parent.parent / "resources" / "models"
+
+def _write_json(path: Path, data) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
+
+
+MODEL_DIR = paths.BUILTIN_ROOT / "models"
 REGISTRY_FILE = MODEL_DIR / "registry.json"
 
 
 class ModelRegistry(BaseRegistry):
-    """模型注册中心"""
+    """模型注册中心。
+
+    读：合并「内置」与「私有」两个目录的 registry.json（私有同 id 覆盖内置）。
+    写：新建 / 更新的模型一律写入私有目录。
+    """
 
     def __init__(self):
         MODEL_DIR.mkdir(parents=True, exist_ok=True)
         (MODEL_DIR / "definitions").mkdir(parents=True, exist_ok=True)
         (MODEL_DIR / "models").mkdir(parents=True, exist_ok=True)
+        pd = paths.ensure_private_dirs("models")
+        (pd / "definitions").mkdir(parents=True, exist_ok=True)
+        (pd / "models").mkdir(parents=True, exist_ok=True)
         if not REGISTRY_FILE.exists():
-            self._write([])
+            _write_json(REGISTRY_FILE, [])
+
+    def _private_registry_file(self) -> Path:
+        d = paths.ensure_private_dirs("models")
+        f = d / "registry.json"
+        if not f.exists():
+            _write_json(f, [])
+        return f
 
     def _read(self) -> list[dict]:
-        with open(REGISTRY_FILE, encoding='utf-8') as f:
-            return json.load(f)
+        """合并内置与私有 registry（私有同 id 覆盖内置）。"""
+        merged: dict[str, dict] = {}
+        for root in paths.resource_roots():
+            rf = root / "models" / "registry.json"
+            if not rf.exists():
+                continue
+            try:
+                for e in json.loads(rf.read_text(encoding="utf-8")):
+                    if isinstance(e, dict) and e.get("id"):
+                        merged[e["id"]] = e
+            except Exception:
+                continue
+        return list(merged.values())
+
+    def read_from(self, root: Path) -> list[dict]:
+        rf = root / "models" / "registry.json"
+        if not rf.exists():
+            return []
+        try:
+            return json.loads(rf.read_text(encoding="utf-8"))
+        except Exception:
+            return []
 
     def _write(self, data: list[dict]):
-        with open(REGISTRY_FILE, "w", encoding='utf-8') as f:
-            json.dump(data, f, ensure_ascii=False, indent=2)
+        """写入私有 registry。"""
+        _write_json(self._private_registry_file(), data)
 
     def _get_def_dir(self) -> Path:
-        return MODEL_DIR / "definitions"
+        return paths.ensure_private_dirs("models") / "definitions"
 
     def _get_models_dir(self) -> Path:
-        return MODEL_DIR / "models"
+        return paths.ensure_private_dirs("models") / "models"
 
     async def register(self, resource: dict = None, **kwargs) -> str:
         if resource is None:

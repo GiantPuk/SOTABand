@@ -41,13 +41,22 @@ def load_agent(impl_path: Path, agent_id: str):
 
     # 读取 spec（优先 spec.md；交互 Agent 等内置类型可能没有 spec.md，
     # 此时回退到 definitions/{id}.md，并从 MD 中解析 role）
+    # 规范文档检索范围：内置 + 私有资源根。
     spec_file = impl_path / "spec.md"
-    def_file = PROJECT_ROOT / "resources" / "agents" / "definitions" / f"{agent_id}.md"
     raw_md = ""
     if spec_file.exists():
         raw_md = spec_file.read_text(encoding='utf-8')
-    elif def_file.exists():
-        raw_md = def_file.read_text(encoding='utf-8')
+    else:
+        try:
+            from core.resource import paths as _paths
+            _def_dirs = [r / "agents" / "definitions" for r in _paths.resource_roots()]
+        except Exception:
+            _def_dirs = [PROJECT_ROOT / "resources" / "agents" / "definitions"]
+        for _d in _def_dirs:
+            _f = _d / f"{agent_id}.md"
+            if _f.exists():
+                raw_md = _f.read_text(encoding='utf-8')
+                break
 
     role = _parse_role_from_md(raw_md) if raw_md else AgentRole.TASK
     spec = AgentSpec(id=agent_id, name=agent_id, role=role)

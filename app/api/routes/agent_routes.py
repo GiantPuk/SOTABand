@@ -182,11 +182,16 @@ async def generate_spec(req: GenerateSpecRequest):
             if not params_desc:
                 params_desc = "（无参数定义）\n"
 
-            # 尝试从工具 MD spec 读取输出格式说明
-            tools_def_dir = Path(__file__).resolve().parent.parent.parent.parent / "resources" / "tools" / "definitions"
-            spec_file = tools_def_dir / f"{tr['id']}.md"
+            # 尝试从工具 MD spec 读取输出格式说明（内置 + 私有目录检索）
+            from core.resource import paths as _paths
+            spec_file = None
+            for _root in _paths.resource_roots():
+                _cand = _root / "tools" / "definitions" / f"{tr['id']}.md"
+                if _cand.exists():
+                    spec_file = _cand
+                    break
             output_info = ""
-            if spec_file.exists():
+            if spec_file is not None and spec_file.exists():
                 spec_text = spec_file.read_text(encoding="utf-8")
                 # 提取输出规范段落
                 out_match = re.search(r'## 3\.\s*输出规范.*?(?=## \d\.|\Z)', spec_text, re.DOTALL)
@@ -368,6 +373,28 @@ async def register_agent(req: RegisterAgentRequest):
     return {"agent_id": registered_id, "entry": entry}
 
 
+def _locate_agent_spec_path(agent_id: str) -> Path | None:
+    """在「内置 + 私有」资源根中定位已有规范文档；不存在返回 None。"""
+    from core.resource import paths as _paths
+
+    for root in _paths.resource_roots():
+        f = root / "agents" / "definitions" / f"{agent_id}.md"
+        if f.exists():
+            return f
+    return None
+
+
+def _locate_agent_impl_dir(agent_id: str) -> Path | None:
+    """在「内置 + 私有」资源根中定位已有实现目录；不存在返回 None。"""
+    from core.resource import paths as _paths
+
+    for root in _paths.resource_roots():
+        d = root / "agents" / "implementations" / agent_id
+        if d.exists():
+            return d
+    return None
+
+
 def _maybe_generate_api_doc(agent_id: str) -> None:
     """若该 Agent 为 Web 服务式且声明了 API，则生成 api.md 说明文档。"""
     try:
@@ -407,14 +434,24 @@ async def get_agent(agent_id: str):
     if not entry:
         raise HTTPException(404, f"Agent '{agent_id}' not found")
 
-    spec_path = registry._get_spec_dir() / f"{agent_id}.md"
-    spec_md = spec_path.read_text(encoding="utf-8") if spec_path.exists() else ""
+    # 在「内置 + 私有」资源根中检索规范 / 实现 / 需求文档
+    from core.resource import paths as _paths
 
-    code_path = registry._get_impl_dir() / agent_id / "agent.py"
-    code = code_path.read_text(encoding="utf-8") if code_path.exists() else ""
+    spec_path = _locate_agent_spec_path(agent_id)
+    spec_md = spec_path.read_text(encoding="utf-8") if spec_path else ""
 
-    demand_path = registry._get_spec_dir() / f"{agent_id}-demand.md"
-    has_demand = demand_path.exists()
+    impl_dir = _locate_agent_impl_dir(agent_id)
+    code = ""
+    if impl_dir and (impl_dir / "agent.py").exists():
+        code = (impl_dir / "agent.py").read_text(encoding="utf-8")
+
+    demand_path = None
+    for root in _paths.resource_roots():
+        cand = root / "agents" / "definitions" / f"{agent_id}-demand.md"
+        if cand.exists():
+            demand_path = cand
+            break
+    has_demand = demand_path is not None
     demand_md = demand_path.read_text(encoding="utf-8") if has_demand else ""
 
     return {**entry, "spec_md": spec_md, "code": code, "has_demand": has_demand, "demand_md": demand_md}
@@ -435,8 +472,11 @@ async def save_agent_spec(agent_id: str, req: SaveSpecRequest):
         raise HTTPException(400, "文档内容不能为空")
 
     await registry.update(agent_id, {"raw_md": req.spec_md})
-    for p in (registry._get_spec_dir() / f"{agent_id}.md",
-              registry._get_impl_dir() / agent_id / "spec.md"):
+    # 优先写回原位置（内置资源就地更新）；不存在则写私有目录
+    spec_path = _locate_agent_spec_path(agent_id) or (registry._get_spec_dir() / f"{agent_id}.md")
+    impl_dir = _locate_agent_impl_dir(agent_id) or (registry._get_impl_dir() / agent_id)
+    impl_dir.mkdir(parents=True, exist_ok=True)
+    for p in (spec_path, impl_dir / "spec.md"):
         try:
             p.parent.mkdir(parents=True, exist_ok=True)
             p.write_text(req.spec_md, encoding="utf-8")
@@ -459,7 +499,8 @@ async def save_agent_code(agent_id: str, req: SaveCodeRequest):
     if not req.code.strip():
         raise HTTPException(400, "代码不能为空")
 
-    impl_dir = registry._get_impl_dir() / agent_id
+    # 优先写回原位置（内置资源就地更新）；不存在则写私有目录
+    impl_dir = _locate_agent_impl_dir(agent_id) or (registry._get_impl_dir() / agent_id)
     impl_dir.mkdir(parents=True, exist_ok=True)
     (impl_dir / "agent.py").write_text(req.code, encoding="utf-8")
     return {"saved": agent_id}
@@ -585,10 +626,9 @@ async def start_agent(agent_id: str):
     if not entry:
         raise HTTPException(404, f"Agent '{agent_id}' not found")
 
-    # registry 中 impl_path 是相对于 resources/agents/ 的路径
-    # 实际实现在 core/agent/implementations/
-    impl_path = f"resources/agents/implementations/{agent_id}"
-    return await agent_factory.start(agent_id, impl_path)
+    # 实现路径交由 agent_factory 在「内置 + 私有」资源根中自动检索，
+    # 不在此硬编码（否则私有目录中的 Agent 无法启动）。
+    return await agent_factory.start(agent_id)
 
 
 @router.post("/{agent_id}/execute")
@@ -765,12 +805,24 @@ async def test_agent_api(agent_id: str, req: TestApiRequest):
 # ══════════════════════════════════════════════════════════════════════
 
 def _load_agent_spec(agent_id: str):
-    """从注册表与 MD 规范加载 Agent 的 spec（含 server/apis 解析）。"""
+    """从注册表与 MD 规范加载 Agent 的 spec（含 server/apis 解析）。
+
+    在「内置 + 私有」资源根中检索规范文档。
+    """
     entry = _read_registry_entry(agent_id)
-    base = registry._get_spec_dir()
-    spec_path = entry.get("spec_path") if entry else None
+    spec_name = entry.get("spec_path") if entry else None
     agent_name = (entry or {}).get("name") or agent_id
-    for cand in ([base / spec_path] if spec_path else []) + [base / f"{agent_id}.md"]:
+
+    from core.resource import paths as _paths
+
+    candidates = []
+    for root in _paths.resource_roots():
+        d = root / "agents" / "definitions"
+        if spec_name:
+            candidates.append(d / Path(spec_name).name)
+        candidates.append(d / f"{agent_id}.md")
+
+    for cand in candidates:
         if cand and cand.exists():
             from core.agent.base import AgentSpec
             from core.agent.entrypoint import _parse_role_from_md

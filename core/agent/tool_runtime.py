@@ -110,15 +110,33 @@ class ToolRuntime:
 
     # ── 进程探测 ──
 
+    @staticmethod
+    def _tool_space_dirs() -> list[Path]:
+        """工具空间目录列表（内置 + 私有）。"""
+        try:
+            from core.resource import paths as _paths
+
+            return [r / "tools" for r in _paths.resource_roots()]
+        except Exception:
+            from pathlib import Path as _P
+
+            return [_P(__file__).resolve().parent.parent.parent / "resources" / "tools"]
+
     def _python_exe(self, tool_id: str) -> str:
         """选择执行工具的 Python：优先工具独立 venv，否则当前解释器。"""
-        venv_py = self.project_root / "resources" / "tools" / "implementations" / tool_id / ".venv" / "bin" / "python"
-        if venv_py.exists():
-            return str(venv_py)
+        for space in self._tool_space_dirs():
+            venv_py = space / "implementations" / tool_id / ".venv" / "bin" / "python"
+            if venv_py.exists():
+                return str(venv_py)
         return sys.executable
 
     def _tool_dir(self, tool_id: str) -> Path:
-        return self.project_root / "resources" / "tools" / "implementations" / tool_id
+        """在「内置 + 私有」资源根中定位工具实现目录。"""
+        for space in self._tool_space_dirs():
+            d = space / "implementations" / tool_id
+            if (d / "tool.py").exists():
+                return d
+        return self._tool_space_dirs()[0] / "implementations" / tool_id
 
     def _has_worker_script(self, tool_id: str) -> bool:
         return (self._tool_dir(tool_id) / "tool.py").exists()

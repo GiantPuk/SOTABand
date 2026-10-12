@@ -22,13 +22,32 @@ class AgentFactory:
         # web-service Agent 的 HTTP 服务信息：{agent_id: {"host":..., "port":..., "apis":[...]}}
         self._services: dict[str, dict] = {}
 
+    @staticmethod
+    def _resolve_impl_path(agent_id: str) -> str | None:
+        """在「内置 + 私有」资源根中定位 Agent 实现目录（相对 PROJECT_ROOT 的路径）。
+
+        返回第一个含 agent.py 的实现目录；均不存在时返回 None。
+        """
+        from core.resource import paths as _paths
+
+        for root in _paths.resource_roots():
+            impl_dir = root / "agents" / "implementations" / agent_id
+            if (impl_dir / "agent.py").exists():
+                try:
+                    return str(impl_dir.relative_to(PROJECT_ROOT))
+                except ValueError:
+                    # 私有根在项目之外时，返回绝对路径
+                    return str(impl_dir)
+        return None
+
     async def start(self, agent_id: str, impl_path: str = None) -> dict:
         """启动 Agent 子进程。若代码缺失则尝试从 spec 自动重新生成。"""
         if agent_id in self._processes and self._processes[agent_id].returncode is None:
             return {"agent_id": agent_id, "status": "already_running"}
 
         if impl_path is None:
-            impl_path = f"resources/agents/implementations/{agent_id}"
+            # 在内置 + 私有资源根中检索实现目录
+            impl_path = self._resolve_impl_path(agent_id) or f"resources/agents/implementations/{agent_id}"
 
         # 检查 agent.py 是否存在
         agent_file = PROJECT_ROOT / impl_path / "agent.py"
@@ -110,7 +129,7 @@ class AgentFactory:
         """判断该 Agent 是否为 web-service 类型（读取其实现代码中的 role 声明）。"""
         try:
             if impl_path is None:
-                impl_path = f"resources/agents/implementations/{agent_id}"
+                impl_path = self._resolve_impl_path(agent_id) or f"resources/agents/implementations/{agent_id}"
             agent_file = PROJECT_ROOT / impl_path / "agent.py"
             if not agent_file.exists():
                 return False
@@ -246,8 +265,16 @@ class AgentFactory:
 
     async def _try_rebuild(self, agent_id: str) -> bool:
         """尝试从 MD 规范文档重新生成 agent 代码，返回是否成功"""
-        spec_file = PROJECT_ROOT / "resources" / "agents" / "definitions" / f"{agent_id}.md"
-        if not spec_file.exists():
+        # 在内置 + 私有资源根中查找规范文档
+        from core.resource import paths as _paths
+
+        spec_file = None
+        for root in _paths.resource_roots():
+            cand = root / "agents" / "definitions" / f"{agent_id}.md"
+            if cand.exists():
+                spec_file = cand
+                break
+        if spec_file is None:
             return False
 
         try:
@@ -258,7 +285,10 @@ class AgentFactory:
                 return False
 
             code = await builder.build(spec)
-            impl_dir = PROJECT_ROOT / "resources" / "agents" / "implementations" / agent_id
+            # 重建的代码写入「私有」实现目录（与新建资源策略一致）
+            from core.resource import paths as _paths
+
+            impl_dir = _paths.ensure_private_dirs("agents") / "implementations" / agent_id
             impl_dir.mkdir(parents=True, exist_ok=True)
             (impl_dir / "agent.py").write_text(code, encoding='utf-8')
             (impl_dir / "spec.md").write_text(spec_file.read_text(encoding='utf-8'), encoding='utf-8')
@@ -311,8 +341,8 @@ class AgentFactory:
         await self.stop(agent_id)
         await asyncio.sleep(0.5)
 
-        # registry 中的 impl_path 相对于 resources/agents/，但 start() 需要相对于 PROJECT_ROOT
-        impl_path = f"resources/agents/implementations/{agent_id}"
+        # 在内置 + 私有资源根中重新定位实现目录后启动
+        impl_path = self._resolve_impl_path(agent_id)
         return await self.start(agent_id, impl_path)
 
     async def execute(

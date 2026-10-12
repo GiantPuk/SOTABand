@@ -130,10 +130,21 @@ class InteractiveAgentBase(BaseAgent):
             from pathlib import Path
 
             root = Path(__file__).resolve().parent.parent.parent
-            p = root / "resources" / "tools" / "definitions" / Path(spec_path).name
-            if not p.exists():
-                p = root / "resources" / "tools" / "definitions" / f"{tool.get('id')}.md"
-            if p.exists():
+            p = None
+            try:
+                from core.resource import paths as _paths
+                _def_dirs = [r / "tools" / "definitions" for r in _paths.resource_roots()]
+            except Exception:
+                _def_dirs = [root / "resources" / "tools" / "definitions"]
+            for _d in _def_dirs:
+                for _name in (Path(spec_path).name, f"{tool.get('id')}.md"):
+                    _cand = _d / _name
+                    if _cand.exists():
+                        p = _cand
+                        break
+                if p:
+                    break
+            if p and p.exists():
                 text = p.read_text(encoding="utf-8")
                 m = re.search(r"##\s*1\.?\s*功能概述\s*\n+(.+?)(?=\n##|\Z)", text, re.DOTALL)
                 if m:
