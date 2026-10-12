@@ -123,7 +123,7 @@ export function AgentEditorView() {
       </div>
 
       {/* Step content */}
-      <div className="flex-1 min-h-0 overflow-auto p-4">
+      <div className="flex-1 min-h-0 overflow-auto p-4 flex flex-col">
         {store.step === 1 && <Step1Description />}
         {store.step === 2 && <Step2Review />}
         {store.step === 3 && <Step3Verify />}
@@ -333,14 +333,14 @@ function Step1Description() {
 
   // ═══ Render ═══
   return (
-    <div className="max-w-2xl mx-auto relative">
+    <div className="max-w-4xl mx-auto relative flex flex-col min-h-full">
       <h3 className="text-lg font-semibold text-maia-text-heading mb-2 tracking-wide">
         Step 1: 描述你的 Agent 需求
       </h3>
 
       {/* 类型选择：先选类型，再填需求（选定后自动填入该类型默认模板） */}
-      <div className="mb-4">
-        <p className="text-sm text-maia-text-secondary mb-2">请先选择 Agent 类型：</p>
+      <div className="mb-3 shrink-0">
+        <p className="text-[13px] text-maia-text-secondary mb-1.5">请先选择 Agent 类型：</p>
         <div className="grid grid-cols-3 gap-2">
           {AGENT_ROLE_OPTIONS.map((opt) => {
             const active = agentRole === opt.value
@@ -356,24 +356,24 @@ function Step1Description() {
                   }
                   setAgentRole(opt.value)
                 }}
-                className={`text-left rounded-lg border px-3 py-2 transition-colors ${
+                className={`text-left rounded-lg border px-3 py-1.5 transition-colors ${
                   active
                     ? 'border-maia-accent bg-maia-accent/10'
                     : 'border-maia-border hover:border-maia-accent/40'
                 }`}
               >
-                <div className="text-[13px] font-semibold text-maia-text-heading mb-0.5">{opt.label}</div>
-                <div className="text-[11px] text-maia-text-muted leading-snug">{opt.desc}</div>
+                <div className="text-[12px] font-semibold text-maia-text-heading">{opt.label}</div>
+                <div className="text-[10px] text-maia-text-muted leading-snug truncate">{opt.desc}</div>
               </button>
             )
           })}
         </div>
       </div>
 
-      <p className="text-sm text-maia-text-secondary mb-2">
-        用自然语言描述你需要什么样的 Agent，系统会调用大模型自动生成标准化的 MD 规范文档。
-        输入 <code className="text-maia-accent bg-maia-accent/5 px-1 rounded">@</code> 引用系统 API，
-        输入 <code className="text-maia-accent bg-maia-accent/5 px-1 rounded">$</code> 引用注册工具。
+      <p className="text-[12px] text-maia-text-secondary mb-2 shrink-0">
+        描述你的 Agent 需求，系统会调用大模型生成标准化 MD 规范文档。
+        <code className="text-maia-accent bg-maia-accent/5 px-1 rounded mx-1">@</code>引用 API，
+        <code className="text-maia-accent bg-maia-accent/5 px-1 rounded mx-1">$</code>引用工具。
       </p>
 
       <textarea
@@ -383,7 +383,7 @@ function Step1Description() {
         onKeyDown={handleKeyDown}
         placeholder={'例如: "我需要一个能分析EEG数据、检测异常信号、自动生成可视化报告的Agent"'}
         rows={6}
-        className="w-full rounded-lg border border-maia-border bg-maia-surface px-4 py-3 text-[13px] tracking-wide outline-none resize-none focus:border-maia-accent/40 placeholder:text-maia-text-muted"
+        className="w-full flex-1 min-h-[200px] rounded-lg border border-maia-border bg-maia-surface px-4 py-3 text-[13px] leading-relaxed tracking-wide outline-none resize-none focus:border-maia-accent/40 placeholder:text-maia-text-muted"
       />
 
       {/* Dropdown via Portal to avoid parent clipping */}
@@ -449,7 +449,7 @@ function Step1Description() {
         </div>
       )}
 
-      <div className="flex justify-end mt-4">
+      <div className="flex justify-end mt-3 shrink-0">
         <Button
           onClick={generateSpec}
           disabled={!description.trim() || !agentRole || isGenerating}

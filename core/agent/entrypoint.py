@@ -149,49 +149,70 @@ async def main():
                 "event": "service_ready",
                 "data": {"host": host, "port": actual_port, "apis": [a.get("name") for a in (agent.spec.apis or [])]},
             })
+
+            # 常驻化本 Agent 依赖的工具（一次性预热：import 重型库 + 加载模型），
+            # 之后每次 API 调用只需付出推理时间，避免重复的启动开销。
+            # 预热在后台进行，不阻塞服务就绪；未就绪期间的调用会自动回退到
+            # ToolExecutor 的一次性执行。
+            async def _warmup():
+                try:
+                    st = await agent.warmup_resident_tools()
+                    if st:
+                        await send_event({"event": "tools_warmed", "data": st})
+                except Exception as e:
+                    await send_event({"event": "error",
+                                      "data": {"message": f"工具常驻预热失败: {e}"}})
+
+            asyncio.ensure_future(_warmup())
             asyncio.ensure_future(_web_host.serve_forever())
         except Exception as e:
             await send_event({"event": "error", "data": {"message": f"Web 服务启动失败: {e}"}})
 
-    while True:
-        try:
-            line = await reader.readline()
-            if not line:
-                break  # stdin closed → 主进程要求退出
+    try:
+        while True:
+            try:
+                line = await reader.readline()
+                if not line:
+                    break  # stdin closed → 主进程要求退出
 
-            task = json.loads(line.decode('utf-8').strip())
+                task = json.loads(line.decode('utf-8').strip())
 
-            if task.get("action") == "stop":
+                if task.get("action") == "stop":
+                    break
+
+                if task.get("action") == "execute":
+                    ctx_data = task.get("context", {})
+                    from core.agent.base import AgentContext
+
+                    ctx = AgentContext(
+                        agent_id=args.agent_id,
+                        session_id=ctx_data.get("session_id", "default"),
+                        user_id=ctx_data.get("user_id", "default"),
+                        metadata=ctx_data.get("metadata", {}) or {},
+                    )
+                    params = task.get("params", {})
+
+                    try:
+                        async for event in agent.execute(ctx, **params):
+                            await send_event(event)
+                    except Exception as e:
+                        await send_event({"event": "error", "data": {"message": str(e)}})
+
+                elif task.get("action") == "ping":
+                    # 健康探测
+                    await send_event({"event": "pong", "data": {}})
+
+            except json.JSONDecodeError:
+                continue
+            except Exception:
                 break
-
-            if task.get("action") == "execute":
-                ctx_data = task.get("context", {})
-                from core.agent.base import AgentContext
-
-                ctx = AgentContext(
-                    agent_id=args.agent_id,
-                    session_id=ctx_data.get("session_id", "default"),
-                    user_id=ctx_data.get("user_id", "default"),
-                    metadata=ctx_data.get("metadata", {}) or {},
-                )
-                params = task.get("params", {})
-
-                try:
-                    async for event in agent.execute(ctx, **params):
-                        await send_event(event)
-                except Exception as e:
-                    await send_event({"event": "error", "data": {"message": str(e)}})
-
-            elif task.get("action") == "ping":
-                # 健康探测
-                await send_event({"event": "pong", "data": {}})
-
-        except json.JSONDecodeError:
-            continue
+    finally:
+        # 无论正常退出还是异常崩溃，都执行清理：
+        # 回收常驻工具进程、释放其占用的模型/显存。
+        try:
+            await agent.on_stop()
         except Exception:
-            break
-
-    await agent.on_stop()
+            pass
 
 
 if __name__ == "__main__":

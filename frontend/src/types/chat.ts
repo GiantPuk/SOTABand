@@ -10,6 +10,7 @@ export type CardType =
   | 'data-preview'
   | 'tool-match'
   | 'tool-confirm'
+  | 'mode-selection'
   | 'code-review'
   | 'execution-progress'
   | 'result-summary'

@@ -267,7 +267,14 @@ class AgentFactory:
             return False
 
     async def stop(self, agent_id: str) -> dict:
-        """停止 Agent 子进程"""
+        """优雅停止 Agent 子进程。
+
+        顺序：发送 stop 命令 → 关闭 stdin（触发 Agent 主循环退出并执行清理，
+        如回收常驻工具进程 / 卸载模型）→ 等待其自行退出 → 超时才强制终止。
+
+        注意：**不能**在发送 stop 后立刻 terminate()——那样 Agent 子进程
+        来不及执行 on_stop() 清理，常驻工具进程与模型资源将无法被优雅释放。
+        """
         proc = self._processes.pop(agent_id, None)
         # 清理 web-service 服务记录
         self._services.pop(agent_id, None)
@@ -275,18 +282,28 @@ class AgentFactory:
             return {"agent_id": agent_id, "status": "not_running"}
 
         if proc.returncode is None:
-            # 发送 stop 命令
+            # 1) 发送 stop 命令
             try:
                 task = json.dumps({"action": "stop"}) + "\n"
                 proc.stdin.write(task.encode())
                 await proc.stdin.drain()
             except Exception:
                 pass
-            proc.terminate()
+            # 2) 关闭 stdin → Agent 主循环读到 EOF 退出（会执行 on_stop 清理）
             try:
-                await asyncio.wait_for(proc.wait(), timeout=3)
+                proc.stdin.close()
+            except Exception:
+                pass
+            # 3) 等待优雅退出（给清理留出时间；模型/显存随常驻进程退出释放）
+            try:
+                await asyncio.wait_for(proc.wait(), timeout=20)
             except asyncio.TimeoutError:
-                proc.kill()
+                # 4) 超时兜底：强制终止
+                try:
+                    proc.terminate()
+                    await asyncio.wait_for(proc.wait(), timeout=5)
+                except asyncio.TimeoutError:
+                    proc.kill()
         return {"agent_id": agent_id, "status": "stopped"}
 
     async def restart(self, agent_id: str) -> dict:

@@ -106,6 +106,8 @@ class BaseAgent(ABC):
         self.spec = spec
         self.config = config or spec.config
         self._running = False
+        # 工具常驻运行时（懒加载；Web 服务式 Agent 用它把依赖工具常驻化）
+        self._tool_runtime = None
 
     @property
     def agent_id(self) -> str:
@@ -117,15 +119,84 @@ class BaseAgent(ABC):
 
     # ── 工具调用辅助（任务式 / Web 服务式 Agent 共用） ──
 
-    async def call_tool(self, tool_id: str, params: dict | None = None) -> dict:
-        """统一调用已注册工具（经 ToolExecutor，子进程隔离执行）。
+    def get_tool_runtime(self):
+        """获取本 Agent 的工具常驻运行时（懒加载）。"""
+        if self._tool_runtime is None:
+            from core.agent.tool_runtime import ToolRuntime
+            from pathlib import Path
 
-        任务式与 Web 服务式 Agent 的流程步骤均通过此方法调用工具，
-        保证与对话式调用使用同一执行链路。
+            project_root = Path(__file__).resolve().parent.parent.parent
+            self._tool_runtime = ToolRuntime(project_root)
+        return self._tool_runtime
+
+    def resident_tool_ids(self) -> list[str]:
+        """返回需要常驻化的工具 id 列表。
+
+        默认：Web 服务式 Agent 将其**声明的工具集全部常驻化**
+        （依据 MD 规范中的 【【工具名】】 引用，或在 registry 的 tools 字段）。
+        子类可覆写以自定义常驻范围。
         """
+        if self.role != AgentRole.WEB_SERVICE:
+            return []
+        try:
+            from core.resource.registry.tool_registry import ToolRegistry
+
+            reg = ToolRegistry()
+            all_tools = reg._read()
+            by_name = {t.get("name", ""): t.get("id", "") for t in all_tools}
+            by_id = {t.get("id", ""): t.get("id", "") for t in all_tools}
+
+            ids: list[str] = []
+            # 1) MD 规范中的 【【工具名】】 引用
+            import re as _re
+
+            raw = getattr(self.spec, "raw_md", "") or ""
+            for nm in _re.findall(r"【【([^】]+)】】", raw):
+                tid = by_name.get(nm.strip()) or by_id.get(nm.strip())
+                if tid and tid not in ids:
+                    ids.append(tid)
+            # 2) 流程 / API 声明中引用的工具
+            for step in (getattr(self.spec, "flow", None) or []):
+                tid = step.get("tool")
+                if tid and tid not in ids:
+                    ids.append(tid)
+            for api in (getattr(self.spec, "apis", None) or []):
+                for step in (api.get("flow") or []):
+                    tid = step.get("tool")
+                    if tid and tid not in ids:
+                        ids.append(tid)
+            return ids
+        except Exception:
+            return []
+
+    async def warmup_resident_tools(self) -> dict:
+        """预热本 Agent 声明的常驻工具（Web 服务式 Agent 启动时调用）。"""
+        tool_ids = self.resident_tool_ids()
+        if not tool_ids:
+            return {}
+        return await self.get_tool_runtime().ensure_started(tool_ids)
+
+    async def call_tool(self, tool_id: str, params: dict | None = None) -> dict:
+        """统一调用已注册工具。
+
+        优先走本 Agent 的**常驻 Worker**（若该工具已常驻且就绪）——
+        省去每次调用重复 import 重型库与加载模型的开销；
+        常驻不可用时回退到 ToolExecutor 的一次性子进程执行，保证可用性。
+        """
+        params = dict(params or {})
+
+        # 1) 尝试常驻路径
+        runtime = self._tool_runtime
+        if runtime is not None:
+            result = await runtime.call(tool_id, params)
+            if result is not None and not result.get("_runtime_error"):
+                return result
+            # 常驻失败 → 回退（并清除 runtime 错误标记）
+
+        # 2) 回退：一次性子进程执行
         from core.executor.tool_executor import ToolExecutor
 
-        return await ToolExecutor.execute(tool_id, dict(params or {}))
+        return await ToolExecutor.execute(tool_id, params)
 
     @staticmethod
     def resolve_refs(value, scope: dict):
@@ -187,8 +258,21 @@ class BaseAgent(ABC):
         self._running = True
 
     async def on_stop(self):
-        """Agent 停止时的清理（子类可覆盖）"""
+        """Agent 停止时的清理。
+
+        框架级行为：回收本 Agent 的常驻工具进程（若有）。
+        常驻 Worker 退出后，其占用的 GPU 显存 / 主机内存会由操作系统自动释放，
+        从而实现「Agent 退出 → 其加载的所有工具一并卸载」的通用能力。
+        子类如需额外清理，可覆写并调用 super().on_stop()。
+        """
         self._running = False
+        # 回收常驻工具运行时（停止所有为其启动的 Worker 进程）
+        if self._tool_runtime is not None:
+            try:
+                await self._tool_runtime.stop_all()
+            except Exception:
+                pass
+            self._tool_runtime = None
 
     async def health_check(self) -> bool:
         """健康检查（子类可覆盖）"""
