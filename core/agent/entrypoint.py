@@ -13,6 +13,8 @@ from pathlib import Path
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
+from core.agent.base import AgentRole  # noqa: E402
+
 
 def load_agent(impl_path: Path, agent_id: str):
     """从 implementations/{agent-id}/agent.py 加载 Agent 实例"""
@@ -24,7 +26,7 @@ def load_agent(impl_path: Path, agent_id: str):
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
 
-    from core.agent.base import BaseAgent, AgentSpec, AgentRole
+    from core.agent.base import BaseAgent, AgentSpec
 
     # 查找 BaseAgent 子类
     agent_cls = None
@@ -37,13 +39,48 @@ def load_agent(impl_path: Path, agent_id: str):
     if agent_cls is None:
         raise ValueError(f"Agent 代码中未找到继承 BaseAgent 的类: {agent_file}")
 
-    # 读取 spec
+    # 读取 spec（优先 spec.md；交互 Agent 等内置类型可能没有 spec.md，
+    # 此时回退到 definitions/{id}.md，并从 MD 中解析 role）
     spec_file = impl_path / "spec.md"
-    spec = AgentSpec(id=agent_id, name=agent_id, role=AgentRole.TASK)
+    def_file = PROJECT_ROOT / "resources" / "agents" / "definitions" / f"{agent_id}.md"
+    raw_md = ""
     if spec_file.exists():
-        spec.raw_md = spec_file.read_text(encoding='utf-8')
+        raw_md = spec_file.read_text(encoding='utf-8')
+    elif def_file.exists():
+        raw_md = def_file.read_text(encoding='utf-8')
 
-    return agent_cls(spec)
+    role = _parse_role_from_md(raw_md) if raw_md else AgentRole.TASK
+    spec = AgentSpec(id=agent_id, name=agent_id, role=role)
+    spec.raw_md = raw_md
+    # 解析 task 的 flow / web-service 的 server+apis（失败时保持空值）
+    spec.parse_structured_fields()
+
+    # 按构造函数签名实例化：
+    # - 部分 Agent（如内置交互 Agent）的 __init__ 只接受 llm_client 等自定义参数，
+    #   不接受 spec；若盲目传 spec 会被当作 llm_client，导致 self.spec 错乱。
+    # - 因此仅当构造函数显式接受 spec 参数时才传入。
+    import inspect
+
+    try:
+        params = inspect.signature(agent_cls.__init__).parameters
+    except (TypeError, ValueError):
+        params = {}
+
+    if "spec" in params:
+        return agent_cls(spec)
+    return agent_cls()
+
+
+def _parse_role_from_md(raw_md: str) -> AgentRole:
+    """从 MD 规范文档头部的 front-matter / 字段中解析 role。"""
+    import re as _re
+
+    m = _re.search(r"^\s*role\s*:\s*([a-zA-Z_\-]+)", raw_md, _re.MULTILINE)
+    if not m:
+        m = _re.search(r"[-*]\s*role\s*[:：]\s*([a-zA-Z_\-]+)", raw_md)
+    if m:
+        return AgentRole(m.group(1).strip())
+    return AgentRole.TASK
 
 
 async def main():
@@ -76,16 +113,45 @@ async def main():
     )
     writer = asyncio.StreamWriter(w_transport, protocol, reader, asyncio.get_event_loop())
 
-    def send_event(event: dict):
-        """发送 JSON 行到主进程"""
+    async def send_event(event: dict):
+        """发送 JSON 行到主进程。
+
+        注意：必须显式 await drain()。asyncio.StreamWriter.write() 仅把数据放入
+        缓冲区，不保证立即送出；若不 drain，事件会滞留在缓冲区，导致主进程读取端
+        「一直转圈」等待——每次用户输入都要等缓冲区满或进程结束才能真正收到。
+        这正是「交互 Agent 每步输入都要等很久」的根因。
+        """
         line = json.dumps(event, ensure_ascii=False) + "\n"
         writer.write(line.encode())
+        try:
+            await writer.drain()
+        except Exception:
+            pass
 
     # 加载失败 → 通知主进程后退出
     if not agent_loaded:
-        send_event({"event": "error", "data": {"message": load_error[:500]}})
-        send_event({"event": "done", "data": {"messageId": "fatal"}})
+        await send_event({"event": "error", "data": {"message": load_error[:500]}})
+        await send_event({"event": "done", "data": {"messageId": "fatal"}})
         return
+
+    # ── Web 服务式：加载成功后自动启动 HTTP 服务 ──
+    _web_host = None
+    if agent.role == AgentRole.WEB_SERVICE:
+        try:
+            from core.agent.web_server import WebServiceHost
+
+            srv_cfg = agent.spec.server or {}
+            host = srv_cfg.get("host", "127.0.0.1")
+            port = int(srv_cfg.get("port") or 0)
+            _web_host = WebServiceHost(agent, host=host, port=port)
+            actual_port = await _web_host.start()
+            await send_event({
+                "event": "service_ready",
+                "data": {"host": host, "port": actual_port, "apis": [a.get("name") for a in (agent.spec.apis or [])]},
+            })
+            asyncio.ensure_future(_web_host.serve_forever())
+        except Exception as e:
+            await send_event({"event": "error", "data": {"message": f"Web 服务启动失败: {e}"}})
 
     while True:
         try:
@@ -106,14 +172,19 @@ async def main():
                     agent_id=args.agent_id,
                     session_id=ctx_data.get("session_id", "default"),
                     user_id=ctx_data.get("user_id", "default"),
+                    metadata=ctx_data.get("metadata", {}) or {},
                 )
                 params = task.get("params", {})
 
                 try:
                     async for event in agent.execute(ctx, **params):
-                        send_event(event)
+                        await send_event(event)
                 except Exception as e:
-                    send_event({"event": "error", "data": {"message": str(e)}})
+                    await send_event({"event": "error", "data": {"message": str(e)}})
+
+            elif task.get("action") == "ping":
+                # 健康探测
+                await send_event({"event": "pong", "data": {}})
 
         except json.JSONDecodeError:
             continue

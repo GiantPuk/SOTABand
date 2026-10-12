@@ -154,9 +154,10 @@ export function ResourceBrowser() {
   const handleResourceClick = (resource: Resource) => {
     selectResource(resource)
     if (resource.type === 'agent') {
-      setActiveView('agent-detail')
+      // 每个 Agent 使用独立视图 ID，双击打开各自独立的标签页与界面
+      setActiveView(`agent-detail:${resource.id}` as never)
     } else if (resource.type === 'tool') {
-      setActiveView('tool-detail')
+      setActiveView(`tool-detail:${resource.id}` as never)
     } else if (resource.type === 'data') {
       setActiveView('data-preview')
     } else if (!rightPanelOpen) {

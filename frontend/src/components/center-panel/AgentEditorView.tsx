@@ -8,8 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardBody } from '@/components/ui/card'
 import { useUIStore } from '@/stores/ui-store'
-import { useResourceStore } from '@/stores/resource-store'
-import { useAgentEditorStore } from '@/stores/agent-editor-store'
+import { useAgentEditorStore, AGENT_ROLE_OPTIONS } from '@/stores/agent-editor-store'
 import { useTabIndent } from '@/hooks/use-tab-indent'
 import { useSaveShortcut } from '@/hooks/use-save-shortcut'
 
@@ -47,7 +46,6 @@ function AgentSaveIndicator() {
 export function AgentEditorView() {
   const store = useAgentEditorStore()
   const setActiveView = useUIStore((s) => s.setActiveView)
-  const selectedResource = useResourceStore((s) => s.selectedResource)
 
   // Ctrl/Cmd+S 保存（仅编辑已注册 Agent 时有效）
   useSaveShortcut(
@@ -57,7 +55,10 @@ export function AgentEditorView() {
 
   const handleClose = () => {
     const isEditingExisting = Boolean(store.editingAgentId)
-    const backTo = isEditingExisting && selectedResource?.type === 'agent' ? 'agent-detail' : 'chat'
+    // 编辑已有 Agent 时返回该 Agent 的独立详情页
+    const backTo = isEditingExisting
+      ? (`agent-detail:${store.editingAgentId}` as never)
+      : ('chat' as never)
     if (isEditingExisting && store.hasUnsavedChanges()) {
       const ok = window.confirm(
         '当前 Agent 有未保存的改动。\n\n' +
@@ -140,7 +141,7 @@ interface AcItem {
 }
 
 function Step1Description() {
-  const { description, setDescription, generateSpec, isGenerating, error } =
+  const { description, setDescription, generateSpec, isGenerating, error, agentRole, setAgentRole } =
     useAgentEditorStore()
 
   const textareaRef = useRef<HTMLTextAreaElement>(null)
@@ -336,7 +337,40 @@ function Step1Description() {
       <h3 className="text-lg font-semibold text-maia-text-heading mb-2 tracking-wide">
         Step 1: 描述你的 Agent 需求
       </h3>
-      <p className="text-sm text-maia-text-secondary mb-4">
+
+      {/* 类型选择：先选类型，再填需求（选定后自动填入该类型默认模板） */}
+      <div className="mb-4">
+        <p className="text-sm text-maia-text-secondary mb-2">请先选择 Agent 类型：</p>
+        <div className="grid grid-cols-3 gap-2">
+          {AGENT_ROLE_OPTIONS.map((opt) => {
+            const active = agentRole === opt.value
+            return (
+              <button
+                key={opt.value}
+                onClick={() => {
+                  // 已有用户内容时询问是否覆盖为模板
+                  if (agentRole && description.trim() && agentRole !== opt.value) {
+                    const ok = window.confirm('切换类型将用该类型的默认模板替换当前需求内容，是否继续？')
+                    if (!ok) return
+                    setDescription('')
+                  }
+                  setAgentRole(opt.value)
+                }}
+                className={`text-left rounded-lg border px-3 py-2 transition-colors ${
+                  active
+                    ? 'border-maia-accent bg-maia-accent/10'
+                    : 'border-maia-border hover:border-maia-accent/40'
+                }`}
+              >
+                <div className="text-[13px] font-semibold text-maia-text-heading mb-0.5">{opt.label}</div>
+                <div className="text-[11px] text-maia-text-muted leading-snug">{opt.desc}</div>
+              </button>
+            )
+          })}
+        </div>
+      </div>
+
+      <p className="text-sm text-maia-text-secondary mb-2">
         用自然语言描述你需要什么样的 Agent，系统会调用大模型自动生成标准化的 MD 规范文档。
         输入 <code className="text-maia-accent bg-maia-accent/5 px-1 rounded">@</code> 引用系统 API，
         输入 <code className="text-maia-accent bg-maia-accent/5 px-1 rounded">$</code> 引用注册工具。
@@ -416,7 +450,11 @@ function Step1Description() {
       )}
 
       <div className="flex justify-end mt-4">
-        <Button onClick={generateSpec} disabled={!description.trim() || isGenerating}>
+        <Button
+          onClick={generateSpec}
+          disabled={!description.trim() || !agentRole || isGenerating}
+          title={!agentRole ? '请先选择 Agent 类型' : undefined}
+        >
           {isGenerating ? (
             <>
               <Loader2 className="h-3.5 w-3.5 animate-spin" />

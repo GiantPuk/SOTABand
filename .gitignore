@@ -68,6 +68,19 @@ models/linear_regression_*.pkl
 storage/user.json
 storage/workspace_tools.json
 
+# 私人资源财产：不提交到远端仓库
+# - resources/：用户创建的工具、智能体、数据、模型等资源（含规范与实现代码）
+# - storage/：引擎运行时状态（工作区、会话、用户信息等）
+resources/
+storage/
+
+# 训练/推理产物与权重（本地生成，体积大，不入仓库）
+runs/
+weights/
+*.pt
+*.pth
+yolo26n.pt
+
 # Generated local assessment logs
 logs/aerial-image-quality-batch-assessment_*.md
 
