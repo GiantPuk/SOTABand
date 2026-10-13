@@ -1,0 +1,2422 @@
+[
+  {
+    "id": "calculate-circle-area",
+    "name": "计算圆面积",
+    "version": "0.1.0",
+    "type": "function",
+    "language": "python",
+    "status": "active",
+    "spec_path": "definitions/calculate-circle-area.md",
+    "impl_path": "implementations/calculate-circle-area/",
+    "input_schema": {},
+    "output_schema": {},
+    "tags": [
+      "圆形面积",
+      "几何计算",
+      "数学工具",
+      "面积公式"
+    ],
+    "usage_count": 0,
+    "created_at": "2026-06-29T16:08:03Z",
+    "param_meta": [
+      {
+        "name": "radius",
+        "type": "float",
+        "required": true,
+        "default": null,
+        "desc": "圆的半径，必须为非负数值",
+        "hints": [
+          "半径",
+          "圆的半径",
+          "半径值",
+          "r",
+          "radius"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "mnist-digit-recognizer",
+    "name": "MNIST数字识别器",
+    "version": "0.1.0",
+    "type": "function",
+    "language": "python",
+    "status": "active",
+    "spec_path": "definitions/mnist-digit-recognizer.md",
+    "impl_path": "implementations/mnist-digit-recognizer/",
+    "input_schema": {},
+    "output_schema": {},
+    "tags": [
+      "手写识别",
+      "数字识别",
+      "图像分类",
+      "深度学习",
+      "MNIST"
+    ],
+    "usage_count": 0,
+    "created_at": "2026-06-30T02:48:17Z",
+    "param_meta": [
+      {
+        "name": "image_path",
+        "type": "string",
+        "required": true,
+        "default": null,
+        "desc": "待识别图片的本地文件路径，支持常见格式如PNG、JPG",
+        "hints": [
+          "图片路径",
+          "图像文件",
+          "要识别的图片",
+          "手写数字图片",
+          "本地图片"
+        ]
+      },
+      {
+        "name": "model_path",
+        "type": "string",
+        "required": false,
+        "default": "./mnist_model.pth",
+        "desc": "预训练模型权重文件的路径",
+        "hints": [
+          "模型文件",
+          "权重文件",
+          "模型路径",
+          "pth文件",
+          "预训练模型"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "face-detection",
+    "name": "人脸检测",
+    "version": "0.1.0",
+    "type": "function",
+    "language": "python",
+    "status": "active",
+    "spec_path": "definitions/face-detection.md",
+    "impl_path": "implementations/face-detection/",
+    "input_schema": {},
+    "output_schema": {},
+    "param_meta": [
+      {
+        "name": "image_path",
+        "type": "string",
+        "required": true,
+        "default": null,
+        "desc": "待检测图片的文件路径",
+        "hints": [
+          "图片路径",
+          "图片文件",
+          "照片",
+          "图像",
+          "要检测的图片",
+          "这张图"
+        ]
+      }
+    ],
+    "tags": [
+      "人脸检测",
+      "图像分析",
+      "人脸定位",
+      "边界框回归"
+    ],
+    "usage_count": 0,
+    "created_at": "2026-07-02T08:58:19Z"
+  },
+  {
+    "id": "human-pose-estimation",
+    "name": "人体关节提取",
+    "version": "0.1.0",
+    "type": "function",
+    "language": "python",
+    "status": "active",
+    "spec_path": "definitions/human-pose-estimation.md",
+    "impl_path": "implementations/human-pose-estimation/",
+    "input_schema": {},
+    "output_schema": {},
+    "tags": [
+      "姿态估计",
+      "关键点检测",
+      "人体骨架",
+      "关节提取"
+    ],
+    "usage_count": 0,
+    "created_at": "2026-07-02T03:57:13Z",
+    "param_meta": [
+      {
+        "name": "image_path",
+        "type": "string",
+        "required": true,
+        "default": null,
+        "desc": "待检测图片的文件路径，支持jpg/png等常见格式",
+        "hints": [
+          "图片",
+          "照片",
+          "图像",
+          "这张图"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "pose-extraction",
+    "name": "姿态提取",
+    "version": "0.1.0",
+    "type": "function",
+    "language": "python",
+    "status": "active",
+    "spec_path": "definitions/pose-extraction.md",
+    "impl_path": "implementations/pose-extraction/",
+    "input_schema": {},
+    "output_schema": {},
+    "tags": [
+      "姿态估计",
+      "关键点检测",
+      "人体骨架",
+      "图像标注",
+      "骨骼绘制"
+    ],
+    "usage_count": 0,
+    "created_at": "2026-07-02T04:28:38Z",
+    "param_meta": [
+      {
+        "name": "image_path",
+        "type": "string",
+        "required": true,
+        "default": null,
+        "desc": "输入图像的本地路径，支持常见格式如jpg、png",
+        "hints": [
+          "图片路径",
+          "图像文件",
+          "输入图片",
+          "照片路径",
+          "要提取姿态的图像"
+        ]
+      },
+      {
+        "name": "conf_threshold",
+        "type": "float",
+        "required": false,
+        "default": 0.5,
+        "desc": "关键点置信度阈值，范围0-1，低于此值的关节不绘制",
+        "hints": [
+          "置信度",
+          "阈值",
+          "关键点置信度",
+          "检测阈值",
+          "最低置信度"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "file-visualizer",
+    "name": "文件可视化器",
+    "version": "0.1.0",
+    "type": "function",
+    "language": "python",
+    "status": "active",
+    "spec_path": "definitions/file-visualizer.md",
+    "impl_path": "implementations/file-visualizer/",
+    "input_schema": {},
+    "output_schema": {},
+    "param_meta": [
+      {
+        "name": "file_path",
+        "type": "string",
+        "required": true,
+        "default": null,
+        "desc": "待可视化的文件路径",
+        "hints": [
+          "文件路径",
+          "可视化文件",
+          "展示这个CSV",
+          "打开这张图片",
+          "看看这个文件"
+        ]
+      },
+      {
+        "name": "max_rows",
+        "type": "integer",
+        "required": false,
+        "default": 1000,
+        "desc": "CSV模式下返回的最大行数",
+        "hints": [
+          "最多显示几行",
+          "限制行数",
+          "只显示前100行",
+          "行数上限"
+        ]
+      }
+    ],
+    "tags": [
+      "文件预览",
+      "表格展示",
+      "图片显示",
+      "自动识别"
+    ],
+    "usage_count": 0,
+    "created_at": "2026-07-03T07:57:20Z"
+  },
+  {
+    "id": "meal-replacement-shape-prediction-training",
+    "name": "代餐奶昔形状预测模型训练",
+    "version": "0.1.0",
+    "type": "function",
+    "language": "python",
+    "status": "active",
+    "spec_path": "definitions/meal-replacement-shape-prediction-training.md",
+    "impl_path": "implementations/meal-replacement-shape-prediction-training/",
+    "input_schema": {},
+    "output_schema": {},
+    "param_meta": [
+      {
+        "name": "data_path",
+        "type": "string",
+        "required": true,
+        "default": null,
+        "desc": "CSV数据集文件路径，需包含7个特征列和2个目标列",
+        "hints": [
+          "数据集路径",
+          "数据文件",
+          "CSV文件",
+          "数据路径"
+        ]
+      },
+      {
+        "name": "model_type",
+        "type": "string",
+        "required": false,
+        "default": "random_forest",
+        "desc": "模型类型，支持random_forest, gradient_boosting, linear_regression, svr, mlp",
+        "hints": [
+          "模型",
+          "算法",
+          "训练模型类型",
+          "随机森林",
+          "梯度提升"
+        ]
+      },
+      {
+        "name": "random_state",
+        "type": "int",
+        "required": false,
+        "default": 42,
+        "desc": "随机种子，保证结果可复现",
+        "hints": [
+          "随机种子",
+          "种子",
+          "随机数",
+          "随机状态"
+        ]
+      },
+      {
+        "name": "test_size",
+        "type": "float",
+        "required": false,
+        "default": 0.2,
+        "desc": "测试集比例",
+        "hints": [
+          "测试比例",
+          "测试集大小",
+          "测试划分",
+          "验证比例"
+        ]
+      },
+      {
+        "name": "output_dir",
+        "type": "string",
+        "required": false,
+        "default": "./models",
+        "desc": "模型保存目录",
+        "hints": [
+          "输出目录",
+          "模型保存路径",
+          "存储目录",
+          "输出文件夹"
+        ]
+      }
+    ],
+    "tags": [
+      "机器学习",
+      "形状预测",
+      "模型训练",
+      "奶昔配方"
+    ],
+    "usage_count": 0,
+    "created_at": "2026-07-03T08:32:18Z"
+  },
+  {
+    "id": "milkshake-data-analysis",
+    "name": "奶昔数据分析",
+    "version": "0.1.0",
+    "type": "function",
+    "language": "python",
+    "status": "active",
+    "spec_path": "definitions/milkshake-data-analysis.md",
+    "impl_path": "implementations/milkshake-data-analysis/",
+    "input_schema": {},
+    "output_schema": {},
+    "param_meta": [
+      {
+        "name": "mode",
+        "type": "string",
+        "required": true,
+        "default": null,
+        "desc": "功能模式，可选 train（训练）或 predict（预测）",
+        "hints": [
+          "模式",
+          "训练还是预测",
+          "功能选项",
+          "train",
+          "predict"
+        ]
+      },
+      {
+        "name": "csv_file",
+        "type": "string",
+        "required": true,
+        "default": null,
+        "desc": "CSV 数据文件的路径",
+        "hints": [
+          "CSV文件",
+          "数据文件",
+          "文件路径",
+          "数据集",
+          "csv路径"
+        ]
+      },
+      {
+        "name": "model_type",
+        "type": "string",
+        "required": true,
+        "default": null,
+        "desc": "回归模型类型，可选 random_forest、xgboost、gradient_boosting、svr、linear_regression、ridge",
+        "hints": [
+          "模型",
+          "算法",
+          "选择模型",
+          "random_forest",
+          "xgboost",
+          "模型类型"
+        ]
+      }
+    ],
+    "tags": [
+      "机器学习",
+      "奶昔配方",
+      "品质预测",
+      "数据分析"
+    ],
+    "usage_count": 0,
+    "created_at": "2026-07-03T09:10:28Z"
+  },
+  {
+    "id": "data-cleaner-extract",
+    "name": "数据清洗工具",
+    "version": "0.1.0",
+    "type": "function",
+    "language": "python",
+    "status": "active",
+    "spec_path": "definitions/data-cleaner-extract.md",
+    "impl_path": "implementations/data-cleaner-extract/",
+    "input_schema": {},
+    "output_schema": {},
+    "param_meta": [
+      {
+        "name": "input_file",
+        "type": "string",
+        "required": true,
+        "default": null,
+        "desc": "待清洗的文本文件路径，支持 .txt、.log 等文本格式",
+        "hints": [
+          "输入文件",
+          "文件路径",
+          "待清洗文件",
+          "文本文件"
+        ]
+      }
+    ],
+    "tags": [
+      "数据清洗",
+      "字段提取",
+      "文本解析",
+      "日志处理"
+    ],
+    "usage_count": 0,
+    "created_at": "2026-07-06T04:11:04Z"
+  },
+  {
+    "id": "calc-square",
+    "name": "整数平方计算器",
+    "version": "0.1.0",
+    "type": "function",
+    "language": "python",
+    "status": "active",
+    "spec_path": "definitions/calc-square.md",
+    "impl_path": "implementations/calc-square/",
+    "input_schema": {},
+    "output_schema": {},
+    "param_meta": [
+      {
+        "name": "n",
+        "type": "int",
+        "required": true,
+        "default": null,
+        "desc": "待计算平方的整数",
+        "hints": [
+          "5"
+        ]
+      }
+    ],
+    "tags": [
+      "数学计算",
+      "平方运算",
+      "整数处理",
+      "数值工具"
+    ],
+    "usage_count": 0,
+    "created_at": "2026-07-25T08:17:16Z"
+  },
+  {
+    "id": "synthesize-image",
+    "name": "合成图片",
+    "version": "0.1.0",
+    "type": "function",
+    "language": "python",
+    "status": "active",
+    "spec_path": "definitions/synthesize-image.md",
+    "impl_path": "implementations/synthesize-image/",
+    "input_schema": {},
+    "output_schema": {},
+    "param_meta": [
+      {
+        "name": "req",
+        "type": "string",
+        "required": true,
+        "default": null,
+        "desc": "生成图片的提示词（prompt）",
+        "hints": []
+      },
+      {
+        "name": "n",
+        "type": "int",
+        "required": true,
+        "default": null,
+        "desc": "需要生成的图片数量",
+        "hints": []
+      },
+      {
+        "name": "dataset",
+        "type": "string",
+        "required": true,
+        "default": null,
+        "desc": "合成图片数据集的名称",
+        "hints": []
+      }
+    ],
+    "tags": [
+      "图片生成",
+      "AI绘图",
+      "数据集构建",
+      "图像合成"
+    ],
+    "usage_count": 0,
+    "created_at": "2026-07-25T11:32:31Z"
+  },
+  {
+    "id": "edit-image",
+    "name": "编辑图片",
+    "version": "0.1.0",
+    "type": "function",
+    "language": "python",
+    "status": "active",
+    "spec_path": "definitions/edit-image.md",
+    "impl_path": "implementations/edit-image/",
+    "input_schema": {},
+    "output_schema": {},
+    "param_meta": [
+      {
+        "name": "dataset",
+        "type": "string",
+        "required": true,
+        "default": null,
+        "desc": "原始数据集名称",
+        "hints": [
+          "my_image_dataset"
+        ]
+      },
+      {
+        "name": "req",
+        "type": "string",
+        "required": true,
+        "default": null,
+        "desc": "图片编辑要求（prompt）",
+        "hints": [
+          "将图片转为黑白风格"
+        ]
+      },
+      {
+        "name": "output_dataset",
+        "type": "string",
+        "required": true,
+        "default": null,
+        "desc": "合成图片数据集名称",
+        "hints": [
+          "edited_output_dataset"
+        ]
+      }
+    ],
+    "tags": [
+      "图片编辑",
+      "批量处理",
+      "AI修图",
+      "数据集"
+    ],
+    "usage_count": 0,
+    "created_at": "2026-07-25T12:25:49Z"
+  },
+  {
+    "id": "image-search-download",
+    "name": "图片搜索与下载工具",
+    "version": "0.1.0",
+    "type": "function",
+    "language": "python",
+    "status": "active",
+    "spec_path": "definitions/image-search-download.md",
+    "impl_path": "implementations/image-search-download/",
+    "input_schema": {},
+    "output_schema": {},
+    "param_meta": [
+      {
+        "name": "req",
+        "type": "string",
+        "required": true,
+        "default": null,
+        "desc": "图片搜索关键词",
+        "hints": [
+          "猫",
+          "日落风景",
+          "beach sunset"
+        ]
+      },
+      {
+        "name": "n",
+        "type": "integer",
+        "required": true,
+        "default": null,
+        "desc": "需要下载的图片数量",
+        "hints": [
+          5,
+          10,
+          20
+        ]
+      },
+      {
+        "name": "dataset",
+        "type": "string",
+        "required": true,
+        "default": null,
+        "desc": "数据集名称，用于注册到平台",
+        "hints": [
+          "猫咪数据集",
+          "风景图片集",
+          "product_images"
+        ]
+      }
+    ],
+    "tags": [
+      "图片搜索",
+      "图片下载",
+      "数据集注册",
+      "Bing图片",
+      "图片采集"
+    ],
+    "usage_count": 0,
+    "created_at": "2026-07-25T13:54:50Z"
+  },
+  {
+    "id": "plot-function-graph",
+    "name": "函数图像绘制器",
+    "version": "0.1.0",
+    "type": "function",
+    "language": "python",
+    "status": "active",
+    "spec_path": "definitions/plot-function-graph.md",
+    "impl_path": "implementations/plot-function-graph/",
+    "input_schema": {},
+    "output_schema": {},
+    "param_meta": [
+      {
+        "name": "equation",
+        "type": "string",
+        "required": true,
+        "default": null,
+        "desc": "一元函数表达式，要求以 `y = f(x)` 的格式给出，支持四则运算、幂运算、常见初等函数（sin, cos, tan, exp, log, sqrt 等）"
+      },
+      {
+        "name": "x_range",
+        "type": "list",
+        "required": false,
+        "default": "[-10, 10]",
+        "desc": "自变量 x 的取值区间，格式为 `[min, max]`（闭区间）"
+      },
+      {
+        "name": "num_points",
+        "type": "int",
+        "required": false,
+        "default": "1000",
+        "desc": "在定义域内生成的采样点数量，决定曲线平滑度"
+      },
+      {
+        "name": "image_size",
+        "type": "list",
+        "required": false,
+        "default": "[800, 600]",
+        "desc": "输出图像的尺寸（宽度, 高度），单位像素"
+      },
+      {
+        "name": "title",
+        "type": "string",
+        "required": false,
+        "default": "\"函数图像\"",
+        "desc": "图表标题"
+      },
+      {
+        "name": "x_label",
+        "type": "string",
+        "required": false,
+        "default": "\"x\"",
+        "desc": "x 轴标签"
+      },
+      {
+        "name": "y_label",
+        "type": "string",
+        "required": false,
+        "default": "\"y\"",
+        "desc": "y 轴标签"
+      }
+    ],
+    "tags": [
+      "函数绘图",
+      "数学可视化",
+      "曲线生成",
+      "图像绘制"
+    ],
+    "usage_count": 0,
+    "created_at": "2026-07-25T14:45:06Z"
+  },
+  {
+    "id": "image-collector",
+    "name": "图片采集器",
+    "version": "0.1.0",
+    "type": "function",
+    "language": "python",
+    "status": "active",
+    "spec_path": "definitions/image-collector.md",
+    "impl_path": "implementations/image-collector/",
+    "input_schema": {},
+    "output_schema": {},
+    "param_meta": [
+      {
+        "name": "req",
+        "type": "string",
+        "required": true,
+        "default": null,
+        "desc": "图片搜索关键词，如 \"city night\"",
+        "hints": [
+          "city night"
+        ]
+      },
+      {
+        "name": "n",
+        "type": "integer",
+        "required": true,
+        "default": null,
+        "desc": "需要下载的图片数量",
+        "hints": [
+          "5"
+        ]
+      },
+      {
+        "name": "dataset",
+        "type": "string",
+        "required": true,
+        "default": null,
+        "desc": "注册到系统的数据集名称",
+        "hints": [
+          "city_images"
+        ]
+      }
+    ],
+    "tags": [
+      "图片采集",
+      "数据集注册",
+      "Unsplash",
+      "图片下载"
+    ],
+    "usage_count": 0,
+    "created_at": "2026-07-25T17:45:11Z"
+  },
+  {
+    "id": "food-recipe-experiment-data-generator",
+    "name": "食品配方实验数据生成器",
+    "version": "0.1.0",
+    "type": "function",
+    "language": "python",
+    "status": "active",
+    "spec_path": "definitions/food-recipe-experiment-data-generator.md",
+    "impl_path": "implementations/food-recipe-experiment-data-generator/",
+    "input_schema": {},
+    "output_schema": {},
+    "param_meta": [
+      {
+        "name": "n",
+        "type": "integer",
+        "required": true,
+        "default": null,
+        "desc": "生成的数据条目数（行数）",
+        "hints": [
+          10,
+          50,
+          100
+        ]
+      },
+      {
+        "name": "output_dataset",
+        "type": "string",
+        "required": true,
+        "default": null,
+        "desc": "数据集注册名称",
+        "hints": [
+          "experiment_2026",
+          "batch_1",
+          "test_data"
+        ]
+      }
+    ],
+    "tags": [
+      "食品配方",
+      "数据生成",
+      "实验模拟",
+      "CSV输出",
+      "数据集注册"
+    ],
+    "usage_count": 0,
+    "created_at": "2026-07-26T01:56:55Z"
+  },
+  {
+    "id": "arxiv-paper-downloader",
+    "name": "ArXiv论文批量下载器",
+    "version": "0.1.0",
+    "type": "function",
+    "language": "python",
+    "status": "active",
+    "spec_path": "definitions/arxiv-paper-downloader.md",
+    "impl_path": "implementations/arxiv-paper-downloader/",
+    "input_schema": {},
+    "output_schema": {},
+    "param_meta": [
+      {
+        "name": "req",
+        "type": "string",
+        "required": true,
+        "default": null,
+        "desc": "论文检索关键词或需求描述",
+        "hints": [
+          "machine learning",
+          "large language models",
+          "graph neural networks"
+        ]
+      },
+      {
+        "name": "n",
+        "type": "integer",
+        "required": true,
+        "default": null,
+        "desc": "需要下载的论文数量（按相关度排序）",
+        "hints": [
+          10,
+          20,
+          5
+        ]
+      },
+      {
+        "name": "year",
+        "type": "integer",
+        "required": true,
+        "default": null,
+        "desc": "发表年份限制，检索该年及以后发表的论文",
+        "hints": [
+          2023,
+          2024,
+          2022
+        ]
+      },
+      {
+        "name": "dataset",
+        "type": "string",
+        "required": true,
+        "default": null,
+        "desc": "目标数据集名称，用于【数据集注册API】注册",
+        "hints": [
+          "my-arxiv-papers",
+          "dl-survey-dataset",
+          "latest-ml-papers"
+        ]
+      }
+    ],
+    "tags": [
+      "论文下载",
+      "学术检索",
+      "批量处理",
+      "文献整理",
+      "数据集注册"
+    ],
+    "usage_count": 0,
+    "created_at": "2026-07-26T08:56:45Z"
+  },
+  {
+    "id": "city-weather-reporter",
+    "name": "城市天气预报",
+    "version": "0.1.0",
+    "type": "function",
+    "language": "python",
+    "status": "active",
+    "spec_path": "definitions/city-weather-reporter.md",
+    "impl_path": "implementations/city-weather-reporter/",
+    "input_schema": {},
+    "output_schema": {},
+    "param_meta": [
+      {
+        "name": "city",
+        "type": "string",
+        "required": true,
+        "default": null,
+        "desc": "城市名称，如“北京”、“上海”",
+        "hints": [
+          "北京",
+          "上海"
+        ]
+      },
+      {
+        "name": "lang",
+        "type": "string",
+        "required": false,
+        "default": "zh",
+        "desc": "返回信息的语言，支持 ISO 639-1 代码（如 \"en\"）",
+        "hints": [
+          "zh",
+          "en"
+        ]
+      }
+    ],
+    "tags": [
+      "天气查询",
+      "气象预报",
+      "城市服务",
+      "实时数据"
+    ],
+    "usage_count": 0,
+    "created_at": "2026-07-26T04:27:52Z"
+  },
+  {
+    "id": "text-to-speech",
+    "name": "文字转语音",
+    "version": "0.1.0",
+    "type": "function",
+    "language": "python",
+    "status": "active",
+    "spec_path": "definitions/text-to-speech.md",
+    "impl_path": "implementations/text-to-speech/",
+    "input_schema": {},
+    "output_schema": {},
+    "param_meta": [
+      {
+        "name": "req",
+        "type": "string",
+        "required": true,
+        "default": null,
+        "desc": "需要转换为语音的文字内容",
+        "hints": [
+          "你好，世界"
+        ]
+      }
+    ],
+    "tags": [
+      "文字转语音",
+      "语音合成",
+      "TTS",
+      "离线语音",
+      "文本朗读"
+    ],
+    "usage_count": 0,
+    "created_at": "2026-07-26T08:52:23Z"
+  },
+  {
+    "id": "large-model-bounding-box-tool",
+    "name": "大模型标框工具",
+    "version": "0.1.0",
+    "type": "function",
+    "language": "python",
+    "status": "active",
+    "spec_path": "definitions/large-model-bounding-box-tool.md",
+    "impl_path": "implementations/large-model-bounding-box-tool/",
+    "input_schema": {},
+    "output_schema": {},
+    "param_meta": [
+      {
+        "name": "file_path",
+        "type": "string",
+        "required": true,
+        "default": null,
+        "desc": "待检测图片的本地文件路径",
+        "hints": [
+          "/home/user/images/cat.jpg"
+        ]
+      },
+      {
+        "name": "req",
+        "type": "string",
+        "required": true,
+        "default": null,
+        "desc": "需要检测的目标描述",
+        "hints": [
+          "person",
+          "car, dog"
+        ]
+      }
+    ],
+    "tags": [
+      "目标检测",
+      "豆包模型",
+      "图像标注",
+      "边界框绘制"
+    ],
+    "usage_count": 0,
+    "created_at": "2026-07-26T17:07:24Z"
+  },
+  {
+    "id": "batch-ai-bbox-labeling",
+    "name": "大模型批量标框",
+    "version": "0.1.0",
+    "type": "function",
+    "language": "python",
+    "status": "active",
+    "spec_path": "definitions/batch-ai-bbox-labeling.md",
+    "impl_path": "implementations/batch-ai-bbox-labeling/",
+    "input_schema": {},
+    "output_schema": {},
+    "param_meta": [
+      {
+        "name": "dataset",
+        "type": "string",
+        "required": true,
+        "default": null,
+        "desc": "原始图片数据集名称，系统通过【获取数据集信息】获取其实际路径",
+        "hints": [
+          "my_dataset"
+        ]
+      },
+      {
+        "name": "req",
+        "type": "string",
+        "required": true,
+        "default": null,
+        "desc": "检测目标描述，例如 \"person, car\"，将作为提示词传给豆包大模型",
+        "hints": [
+          "person, car"
+        ]
+      },
+      {
+        "name": "output_dataset",
+        "type": "string",
+        "required": true,
+        "default": null,
+        "desc": "标注完成后生成的新数据集名称，系统将通过【数据集注册API】进行注册",
+        "hints": [
+          "labeled_output"
+        ]
+      }
+    ],
+    "tags": [
+      "目标检测",
+      "批量处理",
+      "图像标注",
+      "豆包模型"
+    ],
+    "usage_count": 0,
+    "created_at": "2026-07-27T07:17:29Z"
+  },
+  {
+    "id": "test-greeting",
+    "name": "问候测试",
+    "version": "0.1.0",
+    "type": "function",
+    "language": "python",
+    "status": "active",
+    "spec_path": "definitions/test-greeting.md",
+    "impl_path": "implementations/test-greeting/",
+    "input_schema": {},
+    "output_schema": {},
+    "param_meta": [
+      {
+        "name": "command",
+        "type": "string",
+        "required": true,
+        "default": null,
+        "desc": "用户的问候指令",
+        "hints": [
+          "你好",
+          "hi",
+          "good morning"
+        ]
+      }
+    ],
+    "tags": [
+      "问候",
+      "测试工具",
+      "示例"
+    ],
+    "usage_count": 0,
+    "created_at": "2026-07-28T05:47:44Z"
+  },
+  {
+    "id": "extract-references-from-pdf",
+    "name": "PDF论文参考文献提取",
+    "version": "0.1.0",
+    "type": "function",
+    "language": "python",
+    "status": "active",
+    "spec_path": "definitions/extract-references-from-pdf.md",
+    "impl_path": "implementations/extract-references-from-pdf/",
+    "input_schema": {},
+    "output_schema": {},
+    "param_meta": [
+      {
+        "name": "path",
+        "type": "string",
+        "required": true,
+        "default": null,
+        "desc": "待解析的 PDF 论文文件路径（本地绝对路径或可访问的网络路径）",
+        "hints": [
+          "/home/user/paper.pdf",
+          "https://example.com/paper.pdf"
+        ]
+      }
+    ],
+    "tags": [
+      "参考文献",
+      "PDF提取",
+      "论文工具",
+      "文献管理"
+    ],
+    "usage_count": 0,
+    "created_at": "2026-07-28T10:16:39Z"
+  },
+  {
+    "id": "pdf-reference-verifier",
+    "name": "PDF参考文献真实性验证器",
+    "version": "0.1.0",
+    "type": "function",
+    "language": "python",
+    "status": "active",
+    "spec_path": "definitions/pdf-reference-verifier.md",
+    "impl_path": "implementations/pdf-reference-verifier/",
+    "input_schema": {},
+    "output_schema": {},
+    "param_meta": [
+      {
+        "name": "path",
+        "type": "string",
+        "required": true,
+        "default": null,
+        "desc": "PDF 论文文件的本地路径或可访问的 URI",
+        "hints": []
+      }
+    ],
+    "tags": [
+      "文献验证",
+      "PDF检测",
+      "学术查重",
+      "引用校验",
+      "真实性审查"
+    ],
+    "usage_count": 0,
+    "created_at": "2026-07-28T12:18:19Z"
+  },
+  {
+    "id": "image-to-grayscale",
+    "name": "图片黑白转换",
+    "version": "0.1.0",
+    "type": "function",
+    "language": "python",
+    "status": "active",
+    "spec_path": "definitions/image-to-grayscale.md",
+    "impl_path": "implementations/image-to-grayscale/",
+    "input_schema": {},
+    "output_schema": {},
+    "param_meta": [
+      {
+        "name": "file",
+        "type": "string",
+        "required": true,
+        "default": null,
+        "desc": "输入图片的文件路径",
+        "hints": [
+          "/path/to/image.jpg",
+          "/home/user/photo.png",
+          "./input/sample.bmp"
+        ]
+      }
+    ],
+    "tags": [
+      "图片处理",
+      "黑白转换",
+      "灰度化",
+      "图像编辑"
+    ],
+    "usage_count": 0,
+    "created_at": "2026-07-28T15:51:34Z"
+  },
+  {
+    "id": "mel-spectrogram-generator",
+    "name": "梅尔频谱图生成器",
+    "version": "0.1.0",
+    "type": "function",
+    "language": "python",
+    "status": "active",
+    "spec_path": "definitions/mel-spectrogram-generator.md",
+    "impl_path": "implementations/mel-spectrogram-generator/",
+    "input_schema": {},
+    "output_schema": {},
+    "param_meta": [
+      {
+        "name": "voice",
+        "type": "string",
+        "required": true,
+        "default": null,
+        "desc": "输入音频文件的路径（支持 WAV、MP3 等常见格式）"
+      },
+      {
+        "name": "sr",
+        "type": "int",
+        "required": false,
+        "default": "22050",
+        "desc": "目标采样率 (Hz)，音频会被重采样至该值"
+      },
+      {
+        "name": "n_fft",
+        "type": "int",
+        "required": false,
+        "default": "2048",
+        "desc": "FFT 窗口大小（采样点数）"
+      },
+      {
+        "name": "hop_length",
+        "type": "int",
+        "required": false,
+        "default": "512",
+        "desc": "帧移（采样点数）"
+      },
+      {
+        "name": "n_mels",
+        "type": "int",
+        "required": false,
+        "default": "128",
+        "desc": "梅尔滤波器组数量"
+      },
+      {
+        "name": "fmin",
+        "type": "float",
+        "required": false,
+        "default": "0",
+        "desc": "最小频率 (Hz)"
+      },
+      {
+        "name": "fmax",
+        "type": "float",
+        "required": false,
+        "default": "sr/2",
+        "desc": "最大频率 (Hz)，默认为奈奎斯特频率"
+      },
+      {
+        "name": "output_path",
+        "type": "string",
+        "required": false,
+        "default": "自动生成",
+        "desc": "输出梅尔频谱图的保存路径，如未指定则在同一目录生成与音频同名的 `.png` 文件"
+      },
+      {
+        "name": "dpi",
+        "type": "int",
+        "required": false,
+        "default": "100",
+        "desc": "输出图像的分辨率 (DPI)"
+      }
+    ],
+    "tags": [
+      "音频处理",
+      "频谱生成",
+      "声音可视化",
+      "信号分析",
+      "梅尔频谱"
+    ],
+    "usage_count": 0,
+    "created_at": "2026-07-28T16:13:10Z"
+  },
+  {
+    "id": "flight-search-by-city",
+    "name": "航班查询工具",
+    "version": "0.1.0",
+    "type": "function",
+    "language": "python",
+    "status": "active",
+    "spec_path": "definitions/flight-search-by-city.md",
+    "impl_path": "implementations/flight-search-by-city/",
+    "input_schema": {},
+    "output_schema": {},
+    "param_meta": [
+      {
+        "name": "city",
+        "type": "string",
+        "required": true,
+        "default": null,
+        "desc": "要查询的城市名称，支持中文（内部自动转换为 API 所需的英文或 IATA 代码）",
+        "hints": [
+          "北京",
+          "上海"
+        ]
+      },
+      {
+        "name": "n",
+        "type": "integer",
+        "required": true,
+        "default": null,
+        "desc": "最多返回的航班数量，必须为正整数",
+        "hints": [
+          5,
+          10
+        ]
+      }
+    ],
+    "tags": [
+      "航班查询",
+      "实时航班",
+      "城市搜索",
+      "航空数据"
+    ],
+    "usage_count": 0,
+    "created_at": "2026-07-29T05:29:25Z"
+  },
+  {
+    "id": "paper-review",
+    "name": "论文评审",
+    "version": "0.1.0",
+    "type": "function",
+    "language": "python",
+    "status": "active",
+    "spec_path": "definitions/paper-review.md",
+    "impl_path": "implementations/paper-review/",
+    "input_schema": {},
+    "output_schema": {},
+    "param_meta": [
+      {
+        "name": "path",
+        "type": "string",
+        "required": true,
+        "default": null,
+        "desc": "待评审论文的 PDF 文件路径",
+        "hints": [
+          "/home/user/paper.pdf",
+          "./example.pdf"
+        ]
+      },
+      {
+        "name": "conf",
+        "type": "string",
+        "required": true,
+        "default": null,
+        "desc": "投稿的会议名称，用于匹配评审标准",
+        "hints": [
+          "CVPR",
+          "ICML",
+          "NeurIPS"
+        ]
+      },
+      {
+        "name": "dataset",
+        "type": "string",
+        "required": true,
+        "default": null,
+        "desc": "评审结果输出数据集的名称",
+        "hints": [
+          "review_output",
+          "paper_feedback"
+        ]
+      }
+    ],
+    "tags": [
+      "论文评审",
+      "AI审稿",
+      "学术评估",
+      "PDF分析",
+      "深度求索"
+    ],
+    "usage_count": 0,
+    "created_at": "2026-07-29T07:00:02Z"
+  },
+  {
+    "id": "paper-review-suggestions",
+    "name": "论文修改建议",
+    "version": "0.1.0",
+    "type": "function",
+    "language": "python",
+    "status": "active",
+    "spec_path": "definitions/paper-review-suggestions.md",
+    "impl_path": "implementations/paper-review-suggestions/",
+    "input_schema": {},
+    "output_schema": {},
+    "param_meta": [
+      {
+        "name": "path",
+        "type": "string",
+        "required": true,
+        "default": null,
+        "desc": "PDF 论文文件路径",
+        "hints": [
+          "/home/user/paper.pdf",
+          "C:/papers/paper.pdf"
+        ]
+      },
+      {
+        "name": "conf",
+        "type": "string",
+        "required": true,
+        "default": null,
+        "desc": "投稿会议名称，用于依据该会议评审标准进行评议和打分",
+        "hints": [
+          "NeurIPS 2026",
+          "CVPR 2026",
+          "ICML 2026"
+        ]
+      }
+    ],
+    "tags": [
+      "论文评审",
+      "修改建议",
+      "AI审稿",
+      "学术写作",
+      "PDF分析"
+    ],
+    "usage_count": 0,
+    "created_at": "2026-09-07T04:14:01Z"
+  },
+  {
+    "id": "lens-patent-downloader",
+    "name": "Lens专利检索与注册工具",
+    "version": "0.1.0",
+    "type": "function",
+    "language": "python",
+    "status": "active",
+    "spec_path": "definitions/lens-patent-downloader.md",
+    "impl_path": "implementations/lens-patent-downloader/",
+    "input_schema": {},
+    "output_schema": {},
+    "param_meta": [
+      {
+        "name": "req",
+        "type": "string",
+        "required": true,
+        "default": null,
+        "desc": "检索关键词或自然语言需求描述，用于构建 Lens API 的 query 参数",
+        "hints": [
+          "machine learning",
+          "blockchain technology"
+        ]
+      },
+      {
+        "name": "n",
+        "type": "integer",
+        "required": true,
+        "default": null,
+        "desc": "需要下载的专利数量（按相关度降序，取前 n 篇）",
+        "hints": [
+          5,
+          10,
+          20
+        ]
+      },
+      {
+        "name": "year",
+        "type": "integer",
+        "required": true,
+        "default": null,
+        "desc": "发表年份下限（包含该年），专利的公开日期应在此年及之后",
+        "hints": [
+          2020,
+          2019,
+          2023
+        ]
+      },
+      {
+        "name": "dataset",
+        "type": "string",
+        "required": true,
+        "default": null,
+        "desc": "注册数据集时使用的名称，将传入【数据集注册API】",
+        "hints": [
+          "my_patent_dataset",
+          "research_papers"
+        ]
+      }
+    ],
+    "tags": [
+      "专利检索",
+      "文献下载",
+      "数据集注册",
+      "科研辅助"
+    ],
+    "usage_count": 0,
+    "created_at": "2026-07-30T09:48:29Z"
+  },
+  {
+    "id": "patent-translation-tool",
+    "name": "专利检索与翻译工具",
+    "version": "0.1.0",
+    "type": "function",
+    "language": "python",
+    "status": "active",
+    "spec_path": "definitions/patent-translation-tool.md",
+    "impl_path": "implementations/patent-translation-tool/",
+    "input_schema": {},
+    "output_schema": {},
+    "param_meta": [
+      {
+        "name": "req",
+        "type": "string",
+        "required": true,
+        "default": null,
+        "desc": "用户需求描述，用于专利检索",
+        "hints": [
+          "一种基于深度学习的图像识别方法",
+          "自然语言处理相关专利"
+        ]
+      },
+      {
+        "name": "n",
+        "type": "int",
+        "required": true,
+        "default": null,
+        "desc": "需要检索并注册的专利数量",
+        "hints": [
+          "5",
+          "10",
+          "20"
+        ]
+      },
+      {
+        "name": "year",
+        "type": "int",
+        "required": true,
+        "default": null,
+        "desc": "专利发表年限",
+        "hints": [
+          "2023",
+          "2024",
+          "2025"
+        ]
+      },
+      {
+        "name": "dataset",
+        "type": "string",
+        "required": true,
+        "default": null,
+        "desc": "数据集名称，用于定位存储目录",
+        "hints": [
+          "patent_dataset_v1",
+          "my_patents"
+        ]
+      }
+    ],
+    "tags": [
+      "专利检索",
+      "文献翻译",
+      "知识产权",
+      "多语言"
+    ],
+    "usage_count": 0,
+    "created_at": "2026-07-31T05:55:40Z"
+  },
+  {
+    "id": "function-plotter",
+    "name": "函数画图",
+    "version": "0.1.0",
+    "type": "function",
+    "language": "python",
+    "status": "active",
+    "spec_path": "definitions/function-plotter.md",
+    "impl_path": "implementations/function-plotter/",
+    "input_schema": {},
+    "output_schema": {},
+    "param_meta": [
+      {
+        "name": "equation",
+        "type": "string",
+        "required": true,
+        "default": null,
+        "desc": "一元函数表达式，例如 `sin(x)+2*x`（无需写 `y=`）。支持 Python 数学运算符及部分常用函数。",
+        "hints": [
+          "sin(x)+2*x"
+        ]
+      }
+    ],
+    "tags": [
+      "函数绘图",
+      "数学可视化",
+      "图像生成",
+      "代数工具"
+    ],
+    "usage_count": 0,
+    "created_at": "2026-08-01T08:31:52Z"
+  },
+  {
+    "id": "generate-milk-shake-experiment-data",
+    "name": "奶昔配方实验数据生成与注册",
+    "version": "0.1.0",
+    "type": "function",
+    "language": "python",
+    "status": "active",
+    "spec_path": "definitions/generate-milk-shake-experiment-data.md",
+    "impl_path": "implementations/generate-milk-shake-experiment-data/",
+    "input_schema": {},
+    "output_schema": {},
+    "param_meta": [
+      {
+        "name": "n",
+        "type": "int",
+        "required": true,
+        "default": null,
+        "desc": "生成的样本数量（数据条目）",
+        "hints": [
+          10,
+          100,
+          500
+        ]
+      },
+      {
+        "name": "output_dataset",
+        "type": "string",
+        "required": true,
+        "default": null,
+        "desc": "注册数据集的名称",
+        "hints": [
+          "奶昔配方实验数据_v1",
+          "milk_shake_exp_2026"
+        ]
+      }
+    ],
+    "tags": [],
+    "usage_count": 0,
+    "created_at": "2026-08-03T03:53:29Z"
+  },
+  {
+    "id": "train-regression-model",
+    "name": "训练回归模型",
+    "version": "0.1.0",
+    "type": "function",
+    "language": "python",
+    "status": "active",
+    "spec_path": "definitions/train-regression-model.md",
+    "impl_path": "implementations/train-regression-model/",
+    "input_schema": {},
+    "output_schema": {},
+    "param_meta": [
+      {
+        "name": "path",
+        "type": "string",
+        "required": true,
+        "default": null,
+        "desc": "CSV数据文件的完整路径（第1列为标识或不被使用，其余列作为特征预测最后一列目标值）",
+        "hints": [
+          "/data/train.csv",
+          "/home/user/data.csv"
+        ]
+      },
+      {
+        "name": "model_type",
+        "type": "string",
+        "required": true,
+        "default": null,
+        "desc": "回归模型类型，支持：random_forest、xgboost、linear_regression",
+        "hints": [
+          "random_forest",
+          "xgboost",
+          "linear_regression"
+        ]
+      },
+      {
+        "name": "r",
+        "type": "float",
+        "required": true,
+        "default": null,
+        "desc": "测试集占比，取值范围 (0, 1)，训练集为 (1-r)",
+        "hints": [
+          0.2,
+          0.3
+        ]
+      }
+    ],
+    "tags": [],
+    "usage_count": 0,
+    "created_at": "2026-08-04T16:10:01Z"
+  },
+  {
+    "id": "milkshake-predictor-trainer",
+    "name": "奶昔预测模型训练器",
+    "version": "0.1.0",
+    "type": "function",
+    "language": "python",
+    "status": "active",
+    "spec_path": "definitions/milkshake-predictor-trainer.md",
+    "impl_path": "implementations/milkshake-predictor-trainer/",
+    "input_schema": {},
+    "output_schema": {},
+    "param_meta": [
+      {
+        "name": "path",
+        "type": "string",
+        "required": true,
+        "default": null,
+        "desc": "CSV 数据文件路径，第一列为标识列（不使用），其余列作为特征，最后一列为目标值",
+        "hints": [
+          "/data/sales.csv",
+          "./dataset/energy.csv"
+        ]
+      },
+      {
+        "name": "model_type",
+        "type": "string",
+        "required": true,
+        "default": null,
+        "desc": "回归器类型，如“random_forest”、“xgboost”、“linear”等，内部将映射至对应的回归模型",
+        "hints": [
+          "random_forest",
+          "xgboost",
+          "linear"
+        ]
+      },
+      {
+        "name": "r",
+        "type": "float",
+        "required": true,
+        "default": null,
+        "desc": "测试集占比，取值范围 (0,1)，训练集占比 = 1 - r",
+        "hints": [
+          0.2,
+          0.3,
+          0.25
+        ]
+      }
+    ],
+    "tags": [],
+    "usage_count": 0,
+    "created_at": "2026-08-04T20:40:21Z"
+  },
+  {
+    "id": "power-data-visualization",
+    "name": "电力数据可视化",
+    "version": "0.1.0",
+    "type": "function",
+    "language": "python",
+    "status": "active",
+    "spec_path": "definitions/power-data-visualization.md",
+    "impl_path": "implementations/power-data-visualization/",
+    "input_schema": {},
+    "output_schema": {},
+    "param_meta": [
+      {
+        "name": "path",
+        "type": "string",
+        "required": true,
+        "default": "无",
+        "desc": "CSV 文件路径"
+      },
+      {
+        "name": "n",
+        "type": "integer",
+        "required": true,
+        "default": "无",
+        "desc": "列编号，从 1 开始"
+      },
+      {
+        "name": "start",
+        "type": "integer",
+        "required": true,
+        "default": "无",
+        "desc": "起始行号（数据行，不含表头，从 1 开始）"
+      },
+      {
+        "name": "end",
+        "type": "integer",
+        "required": true,
+        "default": "无",
+        "desc": "结束行号（数据行，不含表头，从 1 开始）"
+      }
+    ],
+    "tags": [
+      "数据可视化",
+      "电力数据",
+      "时序曲线",
+      "曲线绘制",
+      "CSV分析"
+    ],
+    "usage_count": 0,
+    "created_at": "2026-08-13T02:20:18Z"
+  },
+  {
+    "id": "electricity-data-forecast-model-training",
+    "name": "电力数据预测模型训练",
+    "version": "0.1.0",
+    "type": "function",
+    "language": "python",
+    "status": "active",
+    "spec_path": "definitions/electricity-data-forecast-model-training.md",
+    "impl_path": "implementations/electricity-data-forecast-model-training/",
+    "input_schema": {},
+    "output_schema": {},
+    "param_meta": [
+      {
+        "name": "path",
+        "type": "string",
+        "required": true,
+        "default": "无",
+        "desc": "CSV 文件路径，第一行为表头"
+      },
+      {
+        "name": "n",
+        "type": "integer",
+        "required": true,
+        "default": "无",
+        "desc": "列编号，从0开始；第 {n} 列传感器数据"
+      },
+      {
+        "name": "w",
+        "type": "integer",
+        "required": true,
+        "default": "无",
+        "desc": "历史时间窗口大小，表示使用过去 {w} 个时刻的数据"
+      },
+      {
+        "name": "v",
+        "type": "integer",
+        "required": true,
+        "default": "无",
+        "desc": "预测时间窗口大小，表示预测未来 {v} 个时刻的数据"
+      },
+      {
+        "name": "epoch",
+        "type": "integer",
+        "required": true,
+        "default": "无",
+        "desc": "LSTM 模型训练轮次"
+      }
+    ],
+    "tags": [
+      "电力数据",
+      "时序预测",
+      "LSTM",
+      "模型训练",
+      "模型注册"
+    ],
+    "usage_count": 0,
+    "created_at": "2026-08-13T06:12:23Z"
+  },
+  {
+    "id": "electricity-data-forecast-test",
+    "name": "电力数据预测测试",
+    "version": "0.1.0",
+    "type": "function",
+    "language": "python",
+    "status": "active",
+    "spec_path": "definitions/electricity-data-forecast-test.md",
+    "impl_path": "implementations/electricity-data-forecast-test/",
+    "input_schema": {},
+    "output_schema": {},
+    "param_meta": [
+      {
+        "name": "path",
+        "type": "string",
+        "required": true,
+        "default": "无",
+        "desc": "CSV 文件路径，表格数据为时序数据，第一行为表头，每行代表一个时刻，每列代表一个传感器"
+      },
+      {
+        "name": "n",
+        "type": "int",
+        "required": true,
+        "default": "无",
+        "desc": "待测试的列编号（从 0 开始），对应 CSV 中某一列传感器数据"
+      },
+      {
+        "name": "model_name",
+        "type": "string",
+        "required": true,
+        "default": "无",
+        "desc": "已注册的 LSTM 模型名称，工具将通过【获取模型信息】获取其存储路径"
+      },
+      {
+        "name": "w",
+        "type": "int",
+        "required": true,
+        "default": "无",
+        "desc": "历史时间窗口大小，即用于预测的连续历史时刻数量"
+      },
+      {
+        "name": "v",
+        "type": "int",
+        "required": true,
+        "default": "无",
+        "desc": "预测时间窗口大小，即需要预测的未来时刻数量"
+      }
+    ],
+    "tags": [
+      "电力预测",
+      "时序预测",
+      "LSTM模型",
+      "模型测试",
+      "误差评估"
+    ],
+    "usage_count": 0,
+    "created_at": "2026-08-13T07:30:09Z"
+  },
+  {
+    "id": "supplier-material-benchmark-evaluator",
+    "name": "供应商原材料基准吻合度评估工具",
+    "version": "0.1.0",
+    "type": "function",
+    "language": "python",
+    "status": "active",
+    "spec_path": "definitions/supplier-material-benchmark-evaluator.md",
+    "impl_path": "implementations/supplier-material-benchmark-evaluator/",
+    "input_schema": {},
+    "output_schema": {},
+    "param_meta": [
+      {
+        "name": "filepath",
+        "type": "string",
+        "required": true,
+        "default": null,
+        "desc": "评估基准文件的路径，用于解析生成基准比对字段",
+        "hints": [
+          "/data/benchmark/supplier_benchmark.pdf",
+          "/documents/原材料基准.pdf"
+        ]
+      },
+      {
+        "name": "dirpath",
+        "type": "string",
+        "required": true,
+        "default": null,
+        "desc": "目录路径，用于读取供应商原材料资料 PDF，并保存生成的 CSV 与 MD 报告",
+        "hints": [
+          "/data/suppliers",
+          "/reports/供应商评估"
+        ]
+      }
+    ],
+    "tags": [
+      "供应商评估",
+      "原材料合规",
+      "基准比对",
+      "智能评估",
+      "食品安全"
+    ],
+    "usage_count": 0,
+    "created_at": "2026-09-06T03:40:25Z"
+  },
+  {
+    "id": "aerial-image-quality-batch-assessment",
+    "name": "航拍图片批量质量评估",
+    "version": "0.1.0",
+    "type": "function",
+    "language": "python",
+    "status": "active",
+    "spec_path": "definitions/aerial-image-quality-batch-assessment.md",
+    "impl_path": "implementations/aerial-image-quality-batch-assessment/",
+    "input_schema": {},
+    "output_schema": {},
+    "param_meta": [
+      {
+        "name": "dataset_name",
+        "type": "string",
+        "required": true,
+        "default": null,
+        "desc": "数据集名称，通过【获取数据集信息】获取图片目录",
+        "hints": [
+          "航拍数据集-城市区域"
+        ]
+      },
+      {
+        "name": "concurrency",
+        "type": "integer",
+        "required": false,
+        "default": 8,
+        "desc": "并发线程数，控制同时调用大模型的数量。若传入值类型非整数或小于1，则使用默认值8。",
+        "hints": [
+          8
+        ]
+      }
+    ],
+    "tags": [],
+    "usage_count": 0,
+    "created_at": "2026-08-28T22:30:03Z",
+    "owner": "local-3697591d",
+    "visibility": "public"
+  },
+  {
+    "id": "custom-model-caller",
+    "name": "自定义模型调用器",
+    "version": "0.1.0",
+    "type": "function",
+    "language": "python",
+    "status": "active",
+    "spec_path": "definitions/custom-model-caller.md",
+    "impl_path": "implementations/custom-model-caller/",
+    "input_schema": {},
+    "output_schema": {},
+    "param_meta": [
+      {
+        "name": "prompt",
+        "type": "string",
+        "required": true,
+        "default": null,
+        "desc": "要发送给模型的内容"
+      },
+      {
+        "name": "model",
+        "type": "string",
+        "required": true,
+        "default": null,
+        "desc": "模型名称，如 doubao-vision-pro-32k"
+      },
+      {
+        "name": "api_key",
+        "type": "string",
+        "required": true,
+        "default": null,
+        "desc": "该服务商的 API Key"
+      },
+      {
+        "name": "provider",
+        "type": "string",
+        "required": false,
+        "default": null,
+        "desc": "服务商 id（doubao/openai/qwen/mimo 等），用于自动解析端点"
+      },
+      {
+        "name": "base_url",
+        "type": "string",
+        "required": false,
+        "default": null,
+        "desc": "仅服务商不在目录中时才需要填"
+      },
+      {
+        "name": "image_path",
+        "type": "string",
+        "required": false,
+        "default": null,
+        "desc": "可选，要分析的图片路径"
+      },
+      {
+        "name": "max_tokens",
+        "type": "integer",
+        "required": false,
+        "default": 4096,
+        "desc": "最大生成长度，推理模型建议 >= 1500"
+      }
+    ],
+    "tags": [
+      "LLM",
+      "多模态",
+      "自定义配置",
+      "AI"
+    ],
+    "usage_count": 0,
+    "created_at": "2026-08-30T07:10:41Z",
+    "owner": "local-3697591d",
+    "visibility": "public"
+  },
+  {
+    "id": "cvpr-paper-downloader",
+    "name": "CVPR顶会论文下载",
+    "version": "0.1.0",
+    "type": "function",
+    "language": "python",
+    "status": "active",
+    "spec_path": "definitions/cvpr-paper-downloader.md",
+    "impl_path": "implementations/cvpr-paper-downloader/",
+    "input_schema": {},
+    "output_schema": {},
+    "param_meta": [
+      {
+        "name": "req",
+        "type": "string",
+        "required": true,
+        "default": null,
+        "desc": "用户需求或检索关键词",
+        "hints": [
+          "图像分割",
+          "目标检测",
+          "transformer"
+        ]
+      },
+      {
+        "name": "n",
+        "type": "int",
+        "required": true,
+        "default": null,
+        "desc": "需要下载的论文数量，按相关程度排序取前 n 篇",
+        "hints": [
+          5,
+          10,
+          20
+        ]
+      },
+      {
+        "name": "year",
+        "type": "int",
+        "required": true,
+        "default": null,
+        "desc": "发表年限阈值，仅下载 year 年及以后发表的论文",
+        "hints": [
+          2020,
+          2023,
+          2024
+        ]
+      },
+      {
+        "name": "data_path",
+        "type": "string",
+        "required": true,
+        "default": null,
+        "desc": "论文保存目录，PDF 文件和 Markdown 汇总文件均保存到此目录",
+        "hints": [
+          "./papers",
+          "/data/papers",
+          "/tmp/cvpr"
+        ]
+      }
+    ],
+    "tags": [
+      "论文下载",
+      "顶会论文",
+      "视觉顶会",
+      "学术检索",
+      "文献整理"
+    ],
+    "usage_count": 0,
+    "created_at": "2026-09-08T06:15:16Z"
+  },
+  {
+    "id": "paper-summary",
+    "name": "论文摘要",
+    "version": "0.1.0",
+    "type": "function",
+    "language": "python",
+    "status": "active",
+    "spec_path": "definitions/paper-summary.md",
+    "impl_path": "implementations/paper-summary/",
+    "input_schema": {},
+    "output_schema": {},
+    "param_meta": [
+      {
+        "name": "dir_path",
+        "type": "string",
+        "required": true,
+        "default": null,
+        "desc": "包含 PDF 论文的目录路径",
+        "hints": [
+          "/data/papers",
+          "./papers"
+        ]
+      }
+    ],
+    "tags": [
+      "论文摘要",
+      "文档解析",
+      "大模型",
+      "文献分析",
+      "报告生成"
+    ],
+    "usage_count": 0,
+    "created_at": "2026-09-09T23:08:05Z"
+  },
+  {
+    "id": "digit-recognition",
+    "name": "数字识别",
+    "version": "0.1.0",
+    "type": "function",
+    "language": "python",
+    "status": "active",
+    "spec_path": "definitions/digit-recognition.md",
+    "impl_path": "implementations/digit-recognition/",
+    "input_schema": {},
+    "output_schema": {},
+    "param_meta": [
+      {
+        "name": "epoch",
+        "type": "int",
+        "required": true,
+        "default": null,
+        "desc": "训练轮次",
+        "hints": [
+          1,
+          5,
+          10
+        ],
+        "mode": "train"
+      },
+      {
+        "name": "n",
+        "type": "int",
+        "required": true,
+        "default": null,
+        "desc": "每层隐含节点的数目",
+        "hints": [
+          64,
+          128,
+          256
+        ],
+        "mode": "train"
+      },
+      {
+        "name": "file",
+        "type": "string",
+        "required": true,
+        "default": null,
+        "desc": "待识别图片文件路径",
+        "hints": [
+          "/path/to/image.png",
+          "./test.png"
+        ],
+        "mode": "test"
+      }
+    ],
+    "modes": [
+      {
+        "id": "train",
+        "name": "训练模式",
+        "desc": "使用 MNIST 数据集训练三层卷积神经网络，保存模型并返回训练集、测试集准确率。"
+      },
+      {
+        "id": "test",
+        "name": "测试模式",
+        "desc": "对输入图片进行必要变换，加载训练模式保存的模型，输出识别到的数字。"
+      }
+    ],
+    "tags": [
+      "数字识别",
+      "图像识别",
+      "卷积网络",
+      "模型训练",
+      "GPU加速"
+    ],
+    "usage_count": 0,
+    "created_at": "2026-09-11T12:41:40Z",
+    "owner": "local-bf30593d",
+    "visibility": "public"
+  },
+  {
+    "id": "test-multi-mode",
+    "name": "测试多模式",
+    "version": "0.1.0",
+    "type": "function",
+    "language": "python",
+    "status": "active",
+    "spec_path": "definitions/test-multi-mode.md",
+    "impl_path": "implementations/test-multi-mode/",
+    "input_schema": {},
+    "output_schema": {},
+    "param_meta": [
+      {
+        "name": "x",
+        "type": "number",
+        "required": true,
+        "default": null,
+        "desc": "需要计算二次方的数值",
+        "hints": [
+          3,
+          -2,
+          0.5
+        ],
+        "mode": "square"
+      },
+      {
+        "name": "x",
+        "type": "number",
+        "required": true,
+        "default": null,
+        "desc": "用于计算 sin(x) 的数值",
+        "hints": [
+          1.57,
+          0
+        ],
+        "mode": "browse-file"
+      },
+      {
+        "name": "y",
+        "type": "number",
+        "required": true,
+        "default": null,
+        "desc": "用于计算 sin(y) 的数值",
+        "hints": [
+          2.71,
+          1
+        ],
+        "mode": "browse-file"
+      },
+      {
+        "name": "file_path",
+        "type": "string",
+        "required": true,
+        "default": null,
+        "desc": "保存计算结果的文件路径",
+        "hints": [
+          "/tmp/result.txt",
+          "./output.csv"
+        ],
+        "mode": "browse-file"
+      }
+    ],
+    "modes": [
+      {
+        "id": "square",
+        "name": "2次方函数",
+        "desc": "接收一个数值 `x`，计算并返回 `x^2`。"
+      },
+      {
+        "id": "browse-file",
+        "name": "浏览文件",
+        "desc": "接收数值 `x`、`y` 和文件路径 `file_path`，计算 `sin(x) + sin(y)`，将结果写入文件，并返回计算结果与文件路径。"
+      }
+    ],
+    "tags": [
+      "数学计算",
+      "平方函数",
+      "正弦计算",
+      "文件写入",
+      "多模式"
+    ],
+    "usage_count": 0,
+    "created_at": "2026-09-11T12:09:43Z",
+    "owner": "local-bf30593d",
+    "visibility": "public"
+  },
+  {
+    "id": "download-voc2007-dataset",
+    "name": "下载VOC2007数据集",
+    "version": "0.1.0",
+    "type": "function",
+    "language": "python",
+    "status": "active",
+    "spec_path": "definitions/download-voc2007-dataset.md",
+    "impl_path": "implementations/download-voc2007-dataset/",
+    "input_schema": {},
+    "output_schema": {},
+    "param_meta": [
+      {
+        "name": "dataset",
+        "type": "string",
+        "required": true,
+        "default": null,
+        "desc": "保存的数据集名称，同时作为注册时的数据集标识",
+        "hints": [
+          "VOC2007"
+        ]
+      }
+    ],
+    "modes": [],
+    "tags": [
+      "数据集下载",
+      "数据注册",
+      "图像数据",
+      "目标检测"
+    ],
+    "usage_count": 0,
+    "created_at": "2026-09-12T10:34:49Z",
+    "owner": "local-bf30593d",
+    "visibility": "public"
+  },
+  {
+    "id": "count-files-in-directory",
+    "name": "统计指定文件夹下的文件数量",
+    "version": "0.1.0",
+    "type": "function",
+    "language": "python",
+    "status": "active",
+    "spec_path": "definitions/count-files-in-directory.md",
+    "impl_path": "implementations/count-files-in-directory/",
+    "input_schema": {},
+    "output_schema": {},
+    "param_meta": [
+      {
+        "name": "dir",
+        "type": "string",
+        "required": true,
+        "default": null,
+        "desc": "目标文件夹路径",
+        "hints": [
+          "/path/to/folder"
+        ]
+      }
+    ],
+    "modes": [],
+    "tags": [
+      "文件统计",
+      "目录管理",
+      "文件计数",
+      "统计工具"
+    ],
+    "usage_count": 0,
+    "created_at": "2026-10-11T07:54:18Z",
+    "owner": "local-662a9da9",
+    "visibility": "public"
+  },
+  {
+    "id": "helloword",
+    "name": "helloword",
+    "version": "0.1.0",
+    "type": "function",
+    "language": "python",
+    "status": "active",
+    "spec_path": "definitions/helloword.md",
+    "impl_path": "implementations/helloword/",
+    "input_schema": {},
+    "output_schema": {},
+    "param_meta": [
+      {
+        "name": "str",
+        "type": "string",
+        "required": true,
+        "default": null,
+        "desc": "需要拼接的字符串",
+        "hints": [
+          "hello",
+          "world"
+        ]
+      }
+    ],
+    "modes": [],
+    "tags": [
+      "字符串拼接",
+      "文本处理",
+      "问候生成",
+      "字符串工具"
+    ],
+    "usage_count": 0,
+    "created_at": "2026-10-12T02:02:29Z",
+    "owner": "local-662a9da9",
+    "visibility": "public"
+  }
+]

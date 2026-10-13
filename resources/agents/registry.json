@@ -1,0 +1,17 @@
+[
+  {
+    "id": "city-info-query-agent",
+    "name": "城市信息查询 Agent",
+    "version": "0.1.0",
+    "role": "interactive",
+    "status": "active",
+    "spec_path": "definitions/city-info-query-agent.md",
+    "impl_path": "implementations/city-info-query-agent/",
+    "tools": [],
+    "tags": [],
+    "created_at": "2026-10-11T16:04:48Z",
+    "health": "healthy",
+    "owner": "local-662a9da9",
+    "visibility": "public"
+  }
+]
