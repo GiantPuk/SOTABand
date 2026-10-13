@@ -91,6 +91,47 @@ class ToolRegistry(BaseRegistry):
     def _get_impl_dir(self) -> Path:
         return paths.ensure_private_dirs("tools") / "implementations"
 
+    # ── 多目录定位（读：内置优先，找不到再查私有）──
+    # 内置工具（随仓库分发的示例工具）的 spec/代码只存在于 resources/ 下，
+    # 私有工具才在 resources-private/ 下。打开详情若只用私有目录会读不到内置
+    # 工具的内容 → 界面空白。下面两个方法给出「实际存在」的路径。
+
+    def find_def_file(self, tool_id: str, suffix: str = ".md") -> Path | None:
+        """在内置 / 私有目录中定位工具的定义文件（存在才返回）。"""
+        for root in paths.resource_roots():
+            p = root / "tools" / "definitions" / f"{tool_id}{suffix}"
+            if p.exists():
+                return p
+        return None
+
+    def find_impl_dir(self, tool_id: str) -> Path | None:
+        """在内置 / 私有目录中定位工具的实现目录（含 tool.py 才返回）。"""
+        for root in paths.resource_roots():
+            d = root / "tools" / "implementations" / tool_id
+            if (d / "tool.py").exists():
+                return d
+        return None
+
+    def read_def_text(self, tool_id: str, suffix: str = ".md") -> tuple[str, bool]:
+        """读取工具定义文件内容，返回 (内容, 是否存在)。"""
+        p = self.find_def_file(tool_id, suffix)
+        if p is None:
+            return "", False
+        try:
+            return p.read_text(encoding="utf-8"), True
+        except Exception:
+            return "", False
+
+    def read_code_text(self, tool_id: str) -> str:
+        """读取工具实现代码（tool.py）；内置 / 私有均支持。"""
+        d = self.find_impl_dir(tool_id)
+        if d is None:
+            return ""
+        try:
+            return (d / "tool.py").read_text(encoding="utf-8")
+        except Exception:
+            return ""
+
     async def register(self, resource: dict) -> str:
         tool_id = resource.get("id", f"tool-{int(time.time())}")
         entry = {

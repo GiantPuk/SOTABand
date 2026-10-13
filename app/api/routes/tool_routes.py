@@ -303,9 +303,73 @@ async def upload_test_file(file: UploadFile = File(...)):
 
 # ── 依赖安装 ──
 
+@router.get("/{tool_id}/check-deps")
+async def check_deps(tool_id: str):
+    """检查工具代码的第三方依赖在当前执行环境中是否齐备。
+
+    从工具代码中静态提取 import（第三方包名），再用工具实际使用的
+    Python 解释器逐个尝试 `import <mod>`，返回缺失清单。
+
+    「添加工具到工作空间」时前端据此弹窗提示安装缺失依赖——
+    否则工具加进来后第一次调用才报 ModuleNotFoundError，用户看到的是
+    「Missing module: xxx」，无从下手。
+    """
+    entry = await registry.get(tool_id)
+    if not entry:
+        raise HTTPException(404, f"Tool '{tool_id}' not found")
+
+    code = registry.read_code_text(tool_id)
+    if not code.strip():
+        return {"tool_id": tool_id, "deps": [], "missing": [], "install": [], "python": "", "env": ""}
+
+    deps = builder._extract_imports(code)
+
+    from core.executor.tool_executor import ToolExecutor
+    import subprocess as _sp
+
+    python_exe = ToolExecutor._get_python_exe(tool_id)
+    env_label = "tool_venv" if ".venv" in python_exe else (
+        "project_venv" if "/venv/" in python_exe else "system"
+    )
+
+    # import 名 → pip 包名 的常见映射。
+    # 检测用 import 名（如 PIL），安装却必须用 pip 包名（pillow），
+    # 否则 pip install PIL 会失败。
+    _PIP_NAME = {
+        "PIL": "pillow", "cv2": "opencv-python", "sklearn": "scikit-learn",
+        "skimage": "scikit-image", "yaml": "pyyaml", "dotenv": "python-dotenv",
+        "bs4": "beautifulsoup4", "fit_zoo": "scipy", "dateutil": "python-dateutil",
+        "serial": "pyserial", "OpenSSL": "pyopenssl", "jwt": "pyjwt",
+        "win32com": "pywin32", "soundfile": "soundfile", "pkg_resources": "setuptools",
+    }
+
+    missing: list[str] = []
+    for mod in deps:
+        try:
+            proc = _sp.run(
+                [python_exe, "-c", f"import {mod}"],
+                capture_output=True, text=True, timeout=15,
+            )
+            if proc.returncode != 0:
+                missing.append(mod)
+        except Exception:
+            # 检测本身失败（超时/解释器不可用）不计入缺失，避免误报
+            continue
+
+    return {
+        "tool_id": tool_id,
+        "deps": deps,
+        "missing": missing,
+        # 安装时使用的 pip 包名（与 missing 一一对应）
+        "install": [_PIP_NAME.get(m, m) for m in missing],
+        "python": python_exe,
+        "env": env_label,
+    }
+
+
 @router.post("/{tool_id}/install-deps")
 async def install_deps(tool_id: str, req: dict):
-    """安装依赖到工具本地 .venv"""
+    """安装依赖到工具本地 .venv（无则装到项目 venv）"""
     deps = req.get("dependencies", [])
     if not deps:
         raise HTTPException(400, "dependencies 不能为空")
@@ -623,16 +687,12 @@ async def update_tool_tags(tool_id: str, req: dict):
 async def get_tool(tool_id: str):
     entry = await registry.get(tool_id)
     if not entry: raise HTTPException(404, f"Tool '{tool_id}' not found")
-    spec_path = registry._get_def_dir() / f"{tool_id}.md"
-    spec_md = spec_path.read_text(encoding="utf-8") if spec_path.exists() else ""
-    code_path = registry._get_impl_dir() / tool_id / "tool.py"
-    code = code_path.read_text(encoding="utf-8") if code_path.exists() else ""
-    demand_path = registry._get_def_dir() / f"{tool_id}-demand.md"
-    has_demand = demand_path.exists()
-    demand_md = demand_path.read_text(encoding="utf-8") if has_demand else ""
-    reference_path = registry._get_def_dir() / f"{tool_id}-reference.md"
-    has_reference = reference_path.exists()
-    reference_code = reference_path.read_text(encoding="utf-8") if has_reference else ""
+    # 内置工具（resources/）与私有工具（resources-private/）的内容都要能读到，
+    # 否则打开内置示例工具会因只查私有目录而界面空白。
+    spec_md, _ = registry.read_def_text(tool_id, ".md")
+    code = registry.read_code_text(tool_id)
+    demand_md, has_demand = registry.read_def_text(tool_id, "-demand.md")
+    reference_code, has_reference = registry.read_def_text(tool_id, "-reference.md")
     return {**entry, "spec_md": spec_md, "code": code, "has_demand": has_demand, "demand_md": demand_md, "has_reference": has_reference, "reference_code": reference_code}
 
 
@@ -660,10 +720,9 @@ async def get_spec_outline(tool_id: str, req: SpecOutlineRequest):
     spec_md = req.spec_md
     is_draft = tool_id in ("", "_draft_", "draft", "@new")
     if not spec_md.strip() and not is_draft:
-        spec_path = registry._get_def_dir() / f"{tool_id}.md"
-        if not spec_path.exists():
+        spec_md, found = registry.read_def_text(tool_id, ".md")
+        if not found:
             raise HTTPException(404, "该工具尚无规范文档")
-        spec_md = spec_path.read_text(encoding="utf-8")
 
     if not spec_md.strip():
         raise HTTPException(400, "缺少 spec_md：新建文档请直接传入文档内容")
@@ -933,10 +992,9 @@ async def update_table_cell_api(tool_id: str, req: UpdateTableCellRequest):
     spec_md = req.spec_md
     is_draft = tool_id in ("", "_draft_", "draft", "@new")
     if not spec_md.strip() and not is_draft:
-        spec_path = registry._get_def_dir() / f"{tool_id}.md"
-        if not spec_path.exists():
+        spec_md, found = registry.read_def_text(tool_id, ".md")
+        if not found:
             raise HTTPException(404, "该工具尚无规范文档")
-        spec_md = spec_path.read_text(encoding="utf-8")
 
     if not spec_md.strip():
         raise HTTPException(400, "缺少 spec_md")
@@ -985,10 +1043,9 @@ async def get_spec_table(tool_id: str, req: SpecOutlineRequest):
     spec_md = req.spec_md
     is_draft = tool_id in ("", "_draft_", "draft", "@new")
     if not spec_md.strip() and not is_draft:
-        spec_path = registry._get_def_dir() / f"{tool_id}.md"
-        if not spec_path.exists():
+        spec_md, found = registry.read_def_text(tool_id, ".md")
+        if not found:
             raise HTTPException(404, "该工具尚无规范文档")
-        spec_md = spec_path.read_text(encoding="utf-8")
 
     if not spec_md.strip():
         raise HTTPException(400, "缺少 spec_md")
@@ -1045,10 +1102,9 @@ async def refine_spec_node(tool_id: str, req: RefineSpecNodeRequest):
     spec_md = req.spec_md
     is_draft = tool_id in ("", "_draft_", "draft", "@new")
     if not spec_md.strip() and not is_draft:
-        spec_path = registry._get_def_dir() / f"{tool_id}.md"
-        if not spec_path.exists():
+        spec_md, found = registry.read_def_text(tool_id, ".md")
+        if not found:
             raise HTTPException(404, "该工具尚无规范文档")
-        spec_md = spec_path.read_text(encoding="utf-8")
 
     if not spec_md.strip():
         raise HTTPException(400, "缺少 spec_md：新建文档请直接传入文档内容")
@@ -1255,8 +1311,7 @@ async def modify_code(tool_id: str, req: "ModifyCodeRequest"):
     if not entry: raise HTTPException(404, f"Tool '{tool_id}' not found")
     current_code = req.current_code or ""
     if not current_code.strip():
-        code_path = registry._get_impl_dir() / tool_id / "tool.py"
-        current_code = code_path.read_text(encoding="utf-8") if code_path.exists() else ""
+        current_code = registry.read_code_text(tool_id)
     if not req.request.strip():
         raise HTTPException(400, "修改描述不能为空")
 
@@ -1295,8 +1350,7 @@ async def modify_and_debug(tool_id: str, req: "ModifyAndDebugRequest"):
         raise HTTPException(404, f"Tool '{tool_id}' not found")
     current_code = req.current_code or ""
     if not current_code.strip():
-        code_path = registry._get_impl_dir() / tool_id / "tool.py"
-        current_code = code_path.read_text(encoding="utf-8") if code_path.exists() else ""
+        current_code = registry.read_code_text(tool_id)
     if not req.request.strip():
         raise HTTPException(400, "修改描述不能为空")
 
@@ -1617,10 +1671,9 @@ async def refine_spec_node_stream(tool_id: str, req: RefineSpecNodeRequest):
     spec_md = req.spec_md
     is_draft = tool_id in ("", "_draft_", "draft", "@new")
     if not spec_md.strip() and not is_draft:
-        spec_path = registry._get_def_dir() / f"{tool_id}.md"
-        if not spec_path.exists():
+        spec_md, found = registry.read_def_text(tool_id, ".md")
+        if not found:
             raise HTTPException(404, "该工具尚无规范文档")
-        spec_md = spec_path.read_text(encoding="utf-8")
 
     if not spec_md.strip():
         raise HTTPException(400, "缺少 spec_md：新建文档请直接传入文档内容")
