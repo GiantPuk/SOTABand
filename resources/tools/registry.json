@@ -2349,6 +2349,77 @@
     "visibility": "public"
   },
   {
+    "id": "count-files-in-directory",
+    "name": "统计指定文件夹下的文件数量",
+    "version": "0.1.0",
+    "type": "function",
+    "language": "python",
+    "status": "active",
+    "spec_path": "definitions/count-files-in-directory.md",
+    "impl_path": "implementations/count-files-in-directory/",
+    "input_schema": {},
+    "output_schema": {},
+    "param_meta": [
+      {
+        "name": "dir",
+        "type": "string",
+        "required": true,
+        "default": null,
+        "desc": "目标文件夹路径",
+        "hints": [
+          "/path/to/folder"
+        ]
+      }
+    ],
+    "modes": [],
+    "tags": [
+      "文件统计",
+      "目录管理",
+      "文件计数",
+      "统计工具"
+    ],
+    "usage_count": 0,
+    "created_at": "2026-10-11T07:54:18Z",
+    "owner": "local-662a9da9",
+    "visibility": "public"
+  },
+  {
+    "id": "helloword",
+    "name": "helloword",
+    "version": "0.1.0",
+    "type": "function",
+    "language": "python",
+    "status": "active",
+    "spec_path": "definitions/helloword.md",
+    "impl_path": "implementations/helloword/",
+    "input_schema": {},
+    "output_schema": {},
+    "param_meta": [
+      {
+        "name": "str",
+        "type": "string",
+        "required": true,
+        "default": null,
+        "desc": "需要拼接的字符串",
+        "hints": [
+          "hello",
+          "world"
+        ]
+      }
+    ],
+    "modes": [],
+    "tags": [
+      "字符串拼接",
+      "文本处理",
+      "问候生成",
+      "字符串工具"
+    ],
+    "usage_count": 0,
+    "created_at": "2026-10-12T02:02:29Z",
+    "owner": "local-662a9da9",
+    "visibility": "public"
+  },
+  {
     "id": "github-code-search",
     "name": "GitHub学术代码查找",
     "version": "1.3.4",

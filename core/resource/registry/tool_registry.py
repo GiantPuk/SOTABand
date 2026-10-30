@@ -20,32 +20,117 @@ from pathlib import Path
 from core.user_context import get_current_user_id, is_visible_to, VISIBILITY_PUBLIC
 
 from core.resource.registry.registry_base import BaseRegistry
+from core.resource import paths
 
-TOOLS_DIR = Path(__file__).resolve().parent.parent.parent.parent / "resources" / "tools"
+
+def _write_json(path: Path, data) -> None:
+    """写入 JSON 文件（自动创建父目录）。"""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
+
+
+# 内置资源根（随仓库分发）与私有资源根（本地新建，不入 git）
+TOOLS_DIR = paths.BUILTIN_ROOT / "tools"
 REGISTRY_FILE = TOOLS_DIR / "registry.json"
 
 
 class ToolRegistry(BaseRegistry):
-    """工具注册中心"""
+    """工具注册中心。
+
+    读：合并「内置」与「私有」两个目录的 registry.json（私有在后，同 id 覆盖内置）。
+    写：新建 / 更新的工具一律写入私有目录，保证本地新建资源不污染内置资源。
+    """
 
     def __init__(self):
+        paths.ensure_private_dirs("tools")
         TOOLS_DIR.mkdir(parents=True, exist_ok=True)
         if not REGISTRY_FILE.exists():
-            self._write([])
+            _write_json(REGISTRY_FILE, [])
+
+    # ── 读写：读合并、写私有 ──
+
+    def _private_registry_file(self) -> Path:
+        d = paths.ensure_private_dirs("tools")
+        f = d / "registry.json"
+        if not f.exists():
+            _write_json(f, [])
+        return f
 
     def _read(self) -> list[dict]:
-        with open(REGISTRY_FILE, encoding='utf-8') as f:
-            return json.load(f)
+        """合并内置与私有 registry（私有同 id 覆盖内置）。"""
+        merged: dict[str, dict] = {}
+        for root in paths.resource_roots():
+            rf = root / "tools" / "registry.json"
+            if not rf.exists():
+                continue
+            try:
+                for e in json.loads(rf.read_text(encoding="utf-8")):
+                    if isinstance(e, dict) and e.get("id"):
+                        merged[e["id"]] = e
+            except Exception:
+                continue
+        return list(merged.values())
 
     def _write(self, data: list[dict]):
-        with open(REGISTRY_FILE, "w", encoding='utf-8') as f:
-            json.dump(data, f, ensure_ascii=False, indent=2)
+        """写入私有 registry（内置资源不在此维护）。"""
+        _write_json(self._private_registry_file(), data)
+
+    def read_from(self, root: Path) -> list[dict]:
+        """读取指定根目录下的 registry（用于区分内置 / 私有）。"""
+        rf = root / "tools" / "registry.json"
+        if not rf.exists():
+            return []
+        try:
+            return json.loads(rf.read_text(encoding="utf-8"))
+        except Exception:
+            return []
 
     def _get_def_dir(self) -> Path:
-        return TOOLS_DIR / "definitions"
+        return paths.ensure_private_dirs("tools") / "definitions"
 
     def _get_impl_dir(self) -> Path:
-        return TOOLS_DIR / "implementations"
+        return paths.ensure_private_dirs("tools") / "implementations"
+
+    # ── 多目录定位（读：内置优先，找不到再查私有）──
+    # 内置工具（随仓库分发的示例工具）的 spec/代码只存在于 resources/ 下，
+    # 私有工具才在 resources-private/ 下。打开详情若只用私有目录会读不到内置
+    # 工具的内容 → 界面空白。下面两个方法给出「实际存在」的路径。
+
+    def find_def_file(self, tool_id: str, suffix: str = ".md") -> Path | None:
+        """在内置 / 私有目录中定位工具的定义文件（存在才返回）。"""
+        for root in paths.resource_roots():
+            p = root / "tools" / "definitions" / f"{tool_id}{suffix}"
+            if p.exists():
+                return p
+        return None
+
+    def find_impl_dir(self, tool_id: str) -> Path | None:
+        """在内置 / 私有目录中定位工具的实现目录（含 tool.py 才返回）。"""
+        for root in paths.resource_roots():
+            d = root / "tools" / "implementations" / tool_id
+            if (d / "tool.py").exists():
+                return d
+        return None
+
+    def read_def_text(self, tool_id: str, suffix: str = ".md") -> tuple[str, bool]:
+        """读取工具定义文件内容，返回 (内容, 是否存在)。"""
+        p = self.find_def_file(tool_id, suffix)
+        if p is None:
+            return "", False
+        try:
+            return p.read_text(encoding="utf-8"), True
+        except Exception:
+            return "", False
+
+    def read_code_text(self, tool_id: str) -> str:
+        """读取工具实现代码（tool.py）；内置 / 私有均支持。"""
+        d = self.find_impl_dir(tool_id)
+        if d is None:
+            return ""
+        try:
+            return (d / "tool.py").read_text(encoding="utf-8")
+        except Exception:
+            return ""
 
     async def register(self, resource: dict) -> str:
         tool_id = resource.get("id", f"tool-{int(time.time())}")

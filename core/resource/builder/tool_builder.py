@@ -106,10 +106,16 @@ def _call_tool(tool_name: str, **params) -> dict:
                     break
         except Exception:
             pass
-    tool_dir = _PROJECT_ROOT / "resources" / "tools" / "implementations" / tool_id
-    tool_file = tool_dir / "tool.py"
-    if not tool_file.exists():
+    # 在「内置 + 私有」资源根中定位工具实现
+    tool_dir = None
+    for _root in (_PROJECT_ROOT / "resources", _PROJECT_ROOT.parent / "resources-private"):
+        _cand = _root / "tools" / "implementations" / tool_id
+        if (_cand / "tool.py").exists():
+            tool_dir = _cand
+            break
+    if tool_dir is None:
         return {"status": "failed", "message": f"Tool '{tool_name}' (id={tool_id}) not found"}
+    tool_file = tool_dir / "tool.py"
     venv_py = tool_dir / ".venv" / "bin" / "python"
     py_exe = str(venv_py) if venv_py.exists() else sys.executable
     script = f"import json, sys; sys.path.insert(0, {str(_PROJECT_ROOT)!r}); exec(open({str(tool_file)!r}, encoding='utf-8').read()); print(json.dumps(execute(**{params!r}), default=str, ensure_ascii=False))"

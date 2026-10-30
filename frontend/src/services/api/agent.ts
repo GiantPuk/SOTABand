@@ -2,10 +2,10 @@
 const BASE_URL = ''
 
 export const agentApi = {
-  async generateSpec(description: string): Promise<{ spec_md: string }> {
+  async generateSpec(description: string, role?: string): Promise<{ spec_md: string }> {
     const res = await fetch(`${BASE_URL}/api/agent/generate-spec`, {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ description }),
+      body: JSON.stringify({ description, role }),
     })
     if (!res.ok) {
       const err = await res.json().catch(() => ({ detail: res.statusText }))

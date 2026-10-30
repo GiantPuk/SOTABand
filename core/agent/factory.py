@@ -19,6 +19,26 @@ class AgentFactory:
 
     def __init__(self):
         self._processes: dict[str, asyncio.subprocess.Process] = {}
+        # web-service Agent 的 HTTP 服务信息：{agent_id: {"host":..., "port":..., "apis":[...]}}
+        self._services: dict[str, dict] = {}
+
+    @staticmethod
+    def _resolve_impl_path(agent_id: str) -> str | None:
+        """在「内置 + 私有」资源根中定位 Agent 实现目录（相对 PROJECT_ROOT 的路径）。
+
+        返回第一个含 agent.py 的实现目录；均不存在时返回 None。
+        """
+        from core.resource import paths as _paths
+
+        for root in _paths.resource_roots():
+            impl_dir = root / "agents" / "implementations" / agent_id
+            if (impl_dir / "agent.py").exists():
+                try:
+                    return str(impl_dir.relative_to(PROJECT_ROOT))
+                except ValueError:
+                    # 私有根在项目之外时，返回绝对路径
+                    return str(impl_dir)
+        return None
 
     async def start(self, agent_id: str, impl_path: str = None) -> dict:
         """启动 Agent 子进程。若代码缺失则尝试从 spec 自动重新生成。"""
@@ -26,7 +46,8 @@ class AgentFactory:
             return {"agent_id": agent_id, "status": "already_running"}
 
         if impl_path is None:
-            impl_path = f"resources/agents/implementations/{agent_id}"
+            # 在内置 + 私有资源根中检索实现目录
+            impl_path = self._resolve_impl_path(agent_id) or f"resources/agents/implementations/{agent_id}"
 
         # 检查 agent.py 是否存在
         agent_file = PROJECT_ROOT / impl_path / "agent.py"
@@ -90,9 +111,67 @@ class AgentFactory:
                 self._processes.pop(agent_id, None)
                 return {"agent_id": agent_id, "status": "failed", "running": False, "error": detail}
 
-            return {"agent_id": agent_id, "status": "started", "running": True}
+            # 仅对 web-service 类型尝试捕获 service_ready 事件。
+            # 其他类型（interactive/task）不应在此读取 stdout——那会与后续
+            # execute_stream 的读取争抢同一条流，并可能吞掉子进程输出，
+            # 导致「每一步用户输入都要等很久才收到响应」。
+            if self._is_web_service(agent_id, impl_path):
+                await self._probe_service_ready(agent_id)
+
+            result = {"agent_id": agent_id, "status": "started", "running": True}
+            if agent_id in self._services:
+                result["service"] = self._services[agent_id]
+            return result
         except Exception as e:
             return {"agent_id": agent_id, "status": "failed", "error": str(e)}
+
+    def _is_web_service(self, agent_id: str, impl_path: str | None = None) -> bool:
+        """判断该 Agent 是否为 web-service 类型（读取其实现代码中的 role 声明）。"""
+        try:
+            if impl_path is None:
+                impl_path = self._resolve_impl_path(agent_id) or f"resources/agents/implementations/{agent_id}"
+            agent_file = PROJECT_ROOT / impl_path / "agent.py"
+            if not agent_file.exists():
+                return False
+            code = agent_file.read_text(encoding="utf-8")
+            return "AgentRole.WEB_SERVICE" in code or "web-service" in code or "web_service" in code
+        except Exception:
+            return False
+
+    async def _probe_service_ready(self, agent_id: str):
+        """读取子进程早期输出，捕获 web-service 的 service_ready 事件。
+
+        仅尝试一次、短超时；失败不影响启动流程（事件会在后续 execute_stream 中自然读到）。
+        """
+        proc = self._processes.get(agent_id)
+        if proc is None or proc.stdout is None:
+            return
+        if agent_id in self._services:
+            return
+        try:
+            chunk = await asyncio.wait_for(proc.stdout.read(4096), timeout=1.5)
+            if not chunk:
+                return
+            for line in chunk.decode("utf-8", "replace").splitlines():
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    event = json.loads(line)
+                except Exception:
+                    continue
+                if event.get("event") == "service_ready":
+                    self._services[agent_id] = {
+                        "host": event["data"].get("host", "127.0.0.1"),
+                        "port": event["data"].get("port"),
+                        "apis": event["data"].get("apis", []),
+                    }
+        except (asyncio.TimeoutError, Exception):
+            pass
+
+    def get_service(self, agent_id: str) -> dict | None:
+        """返回 web-service Agent 的 HTTP 服务信息（未启动或非 web-service 时为 None）。"""
+        return self._services.get(agent_id)
 
     @staticmethod
     def _check_agent_code(code: str) -> list[str]:
@@ -186,8 +265,16 @@ class AgentFactory:
 
     async def _try_rebuild(self, agent_id: str) -> bool:
         """尝试从 MD 规范文档重新生成 agent 代码，返回是否成功"""
-        spec_file = PROJECT_ROOT / "resources" / "agents" / "definitions" / f"{agent_id}.md"
-        if not spec_file.exists():
+        # 在内置 + 私有资源根中查找规范文档
+        from core.resource import paths as _paths
+
+        spec_file = None
+        for root in _paths.resource_roots():
+            cand = root / "agents" / "definitions" / f"{agent_id}.md"
+            if cand.exists():
+                spec_file = cand
+                break
+        if spec_file is None:
             return False
 
         try:
@@ -198,7 +285,10 @@ class AgentFactory:
                 return False
 
             code = await builder.build(spec)
-            impl_dir = PROJECT_ROOT / "resources" / "agents" / "implementations" / agent_id
+            # 重建的代码写入「私有」实现目录（与新建资源策略一致）
+            from core.resource import paths as _paths
+
+            impl_dir = _paths.ensure_private_dirs("agents") / "implementations" / agent_id
             impl_dir.mkdir(parents=True, exist_ok=True)
             (impl_dir / "agent.py").write_text(code, encoding='utf-8')
             (impl_dir / "spec.md").write_text(spec_file.read_text(encoding='utf-8'), encoding='utf-8')
@@ -207,24 +297,43 @@ class AgentFactory:
             return False
 
     async def stop(self, agent_id: str) -> dict:
-        """停止 Agent 子进程"""
+        """优雅停止 Agent 子进程。
+
+        顺序：发送 stop 命令 → 关闭 stdin（触发 Agent 主循环退出并执行清理，
+        如回收常驻工具进程 / 卸载模型）→ 等待其自行退出 → 超时才强制终止。
+
+        注意：**不能**在发送 stop 后立刻 terminate()——那样 Agent 子进程
+        来不及执行 on_stop() 清理，常驻工具进程与模型资源将无法被优雅释放。
+        """
         proc = self._processes.pop(agent_id, None)
+        # 清理 web-service 服务记录
+        self._services.pop(agent_id, None)
         if proc is None:
             return {"agent_id": agent_id, "status": "not_running"}
 
         if proc.returncode is None:
-            # 发送 stop 命令
+            # 1) 发送 stop 命令
             try:
                 task = json.dumps({"action": "stop"}) + "\n"
                 proc.stdin.write(task.encode())
                 await proc.stdin.drain()
             except Exception:
                 pass
-            proc.terminate()
+            # 2) 关闭 stdin → Agent 主循环读到 EOF 退出（会执行 on_stop 清理）
             try:
-                await asyncio.wait_for(proc.wait(), timeout=3)
+                proc.stdin.close()
+            except Exception:
+                pass
+            # 3) 等待优雅退出（给清理留出时间；模型/显存随常驻进程退出释放）
+            try:
+                await asyncio.wait_for(proc.wait(), timeout=20)
             except asyncio.TimeoutError:
-                proc.kill()
+                # 4) 超时兜底：强制终止
+                try:
+                    proc.terminate()
+                    await asyncio.wait_for(proc.wait(), timeout=5)
+                except asyncio.TimeoutError:
+                    proc.kill()
         return {"agent_id": agent_id, "status": "stopped"}
 
     async def restart(self, agent_id: str) -> dict:
@@ -232,23 +341,50 @@ class AgentFactory:
         await self.stop(agent_id)
         await asyncio.sleep(0.5)
 
-        # registry 中的 impl_path 相对于 resources/agents/，但 start() 需要相对于 PROJECT_ROOT
-        impl_path = f"resources/agents/implementations/{agent_id}"
+        # 在内置 + 私有资源根中重新定位实现目录后启动
+        impl_path = self._resolve_impl_path(agent_id)
         return await self.start(agent_id, impl_path)
 
     async def execute(
         self, agent_id: str, content: str
     ) -> AsyncGenerator[dict, None]:
-        """向 Agent 子进程发送任务，流式读取响应（总超时 120s）"""
+        """向 Agent 子进程发送任务，流式读取响应（总超时 120s）。
+
+        兼容旧调用：仅传 content。
+        """
+        async for event in self.execute_stream(
+            agent_id, params={"content": content}
+        ):
+            yield event
+
+    async def execute_stream(
+        self,
+        agent_id: str,
+        params: dict | None = None,
+        context: dict | None = None,
+        timeout: float = 120,
+    ) -> AsyncGenerator[dict, None]:
+        """向 Agent 子进程发送任务（支持任意参数），流式读取响应。
+
+        Args:
+            agent_id: Agent ID
+            params: 传给 agent.execute(**params) 的参数（如 content / attachments / workspace_tool_ids）
+            context: 执行上下文覆盖（session_id / user_id / metadata）
+            timeout: 总超时（秒）
+        """
         proc = self._processes.get(agent_id)
         if proc is None or proc.returncode is not None:
             yield {"event": "error", "data": {"message": f"Agent '{agent_id}' 未运行"}}
             return
 
+        ctx = {"session_id": "default", "user_id": "default", "agent_id": agent_id}
+        if context:
+            ctx.update(context)
+
         task = {
             "action": "execute",
-            "context": {"session_id": "default", "user_id": "default", "agent_id": agent_id},
-            "params": {"content": content},
+            "context": ctx,
+            "params": dict(params or {}),
         }
         try:
             proc.stdin.write((json.dumps(task) + "\n").encode())
@@ -257,30 +393,48 @@ class AgentFactory:
             yield {"event": "error", "data": {"message": "Agent 进程已断开"}}
             return
 
-        # 流式读取 stdout（总超时 120s，单次读取超时 30s）
+        # 流式读取 stdout：按行读取（JSON-line 协议），保证事件到达即被取出。
+        # 注意：不要用 read(4096)——它会「攒满 4096 字节或 EOF」才返回，导致
+        # 单条小事件被长时间挂起，表现为「每步输入都要等很久」。
+        # readline() 在遇到换行符即返回，与子进程的 flush 配合可做到低延迟。
+        #
+        # 超时语义：
+        #   - timeout=None  → 不设总超时（长耗时工具，如模型训练，必须支持）。
+        #   - timeout>0     → 总时长上限，超出后向调用方报超时并终止子进程。
+        # 空闲超时（idle）：单次 readline 长时间无新事件不代表任务卡死——
+        # 训练类任务可能数分钟不产生中间输出。故给予较大的空闲容忍度，
+        # 仅在「确实长时间完全无输出且进程仍存活」时才放弃等待。
         buffer = b""
-        deadline = time.time() + 120
+        deadline = (time.time() + timeout) if timeout else None
+        idle_timeout = max(600.0, float(timeout)) if timeout else 3600.0
         while proc.returncode is None:
-            if time.time() > deadline:
-                yield {"event": "error", "data": {"message": "Agent 执行超时 (120s)"}}
+            if deadline is not None and time.time() > deadline:
+                yield {"event": "error", "data": {"message": f"Agent 执行超时 ({int(timeout)}s)"}}
                 try:
                     proc.terminate()
                 except Exception:
                     pass
                 return
             try:
-                chunk = await asyncio.wait_for(proc.stdout.read(4096), timeout=30)
-                if not chunk:
+                line = await asyncio.wait_for(proc.stdout.readline(), timeout=idle_timeout)
+                if not line:
                     break
-                buffer += chunk
-                while b"\n" in buffer:
-                    line, buffer = buffer.split(b"\n", 1)
-                    try:
-                        event = json.loads(line.decode('utf-8'))
-                        yield event
-                    except (json.JSONDecodeError, UnicodeDecodeError):
-                        pass
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    event = json.loads(line.decode('utf-8'))
+                    yield event
+                    # done 事件到达即表示本轮执行结束，立即返回，
+                    # 避免继续阻塞读取等待下一轮输入。
+                    if isinstance(event, dict) and event.get("event") == "done":
+                        return
+                except (json.JSONDecodeError, UnicodeDecodeError):
+                    pass
             except asyncio.TimeoutError:
+                # 空闲超时：超过容忍时长仍无任何输出。
+                yield {"event": "error",
+                       "data": {"message": f"Agent 长时间无响应（{int(idle_timeout)}s 无输出）"}}
                 break
             except Exception:
                 break
@@ -288,6 +442,19 @@ class AgentFactory:
     def is_running(self, agent_id: str) -> bool:
         proc = self._processes.get(agent_id)
         return proc is not None and proc.returncode is None
+
+    def status(self, agent_id: str) -> dict:
+        """返回 Agent 运行状态（供前端查询）。"""
+        proc = self._processes.get(agent_id)
+        if proc is None:
+            return {"agent_id": agent_id, "running": False, "status": "stopped", "pid": None}
+        running = proc.returncode is None
+        return {
+            "agent_id": agent_id,
+            "running": running,
+            "status": "running" if running else "stopped",
+            "pid": proc.pid if running else None,
+        }
 
 
 # 全局单例

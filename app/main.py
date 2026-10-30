@@ -21,17 +21,29 @@ from app.api.routes.llm_routes import router as llm_router
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """应用生命周期 — 启动时初始化 Agent"""
-    # 启动时：导入交互Agent（触发单例初始化）
-    from app.api.routes.chat_routes import interactive_agent as _ia
+    """应用生命周期 — 启动时拉起系统默认交互 Agent（独立进程）"""
+    from core.agent.factory import agent_factory
+    from app.api.routes.chat_routes import (
+        ensure_default_interactive_agent,
+        DEFAULT_INTERACTIVE_AGENT_ID,
+    )
 
-    print(f"[SOTABand] 交互Agent 已就绪 (id={_ia.agent_id})")
+    # 启动系统默认交互 Agent：它是系统默认入口，随引擎自动拉起。
+    # 注意：它同样支持被用户手动关闭 / 重启（见 agent_routes 的 start/stop）。
+    result = await ensure_default_interactive_agent()
+    status = result.get("status", "unknown")
+    print(f"[SOTABand] 交互Agent 已就绪 (id={DEFAULT_INTERACTIVE_AGENT_ID}, {status})")
     print(f"[SOTABand] LLM: {settings.llm.provider}/{settings.llm.model}")
     print(f"[SOTABand] API: http://{settings.app.api_host}:{settings.app.api_port}")
 
     yield  # 应用运行中
 
-    # 关闭时：清理
+    # 关闭时：停止所有 Agent 子进程
+    for agent_id in list(getattr(agent_factory, "_processes", {}).keys()):
+        try:
+            await agent_factory.stop(agent_id)
+        except Exception:
+            pass
     print("[SOTABand] 服务关闭")
 
 

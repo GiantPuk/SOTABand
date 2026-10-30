@@ -47,11 +47,15 @@ function parseInputs(md: string): InputField[] {
   return fields
 }
 
-export function ToolDetailView() {
+export function ToolDetailView({ toolId }: { toolId?: string } = {}) {
   const selectedResource = useResourceStore((s) => s.selectedResource)
   const cachedToolForDetail = useResourceStore((s) => s.cachedToolForDetail)
+  const tools = useResourceStore((s) => s.toolResources)
   const setActiveView = useUIStore((s) => s.setActiveView)
-  const tool = selectedResource?.type === 'tool' ? (selectedResource as ToolResource) : cachedToolForDetail
+  // 指定 toolId 时（独立标签页）从列表中定位；否则回退到选中资源/缓存。
+  const tool = toolId
+    ? ((tools.find((t: { id: string }) => t.id === toolId) as ToolResource | undefined) || cachedToolForDetail)
+    : (selectedResource?.type === 'tool' ? (selectedResource as ToolResource) : cachedToolForDetail)
   // Python 代码用 4 空格缩进
   const onCodeTabIndent = useTabIndent('    ')
 

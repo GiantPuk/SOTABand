@@ -7,6 +7,9 @@ class GenerateSpecRequest(BaseModel):
     """自然语言 → MD 规范文档"""
 
     description: str = ""
+    # Agent 类型（三类体系）：interactive | task | web-service
+    # 用于在生成 MD 时注入类型专属的结构约束（如 task 的 flow、web-service 的 apis）
+    role: str | None = None
 
 
 class GenerateCodeRequest(BaseModel):
