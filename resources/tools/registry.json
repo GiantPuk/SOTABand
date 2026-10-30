@@ -2351,7 +2351,7 @@
   {
     "id": "github-code-search",
     "name": "GitHub学术代码查找",
-    "version": "1.3.0",
+    "version": "1.3.4",
     "type": "function",
     "language": "python",
     "status": "active",
@@ -2372,7 +2372,8 @@
             "compare",
             "config_status",
             "configure",
-            "config_reset"
+            "config_reset",
+            "recover"
           ],
           "default": "search"
         },
@@ -2394,22 +2395,6 @@
     },
     "param_meta": [
       {
-        "name": "mode",
-        "type": "string",
-        "required": false,
-        "default": "search",
-        "desc": "选择以下模式",
-        "hints": []
-      },
-      {
-        "name": "register_output",
-        "type": "bool",
-        "required": false,
-        "default": false,
-        "desc": "导出文件时可选登记到平台数据空间，默认为关闭",
-        "hints": []
-      },
-      {
         "name": "query",
         "type": "string",
         "required": true,
@@ -2422,7 +2407,7 @@
         "name": "limit",
         "type": "int",
         "required": false,
-        "default": 10,
+        "default": "10",
         "desc": "每页 1-100 条",
         "hints": [],
         "mode": "search"
@@ -2431,7 +2416,7 @@
         "name": "page",
         "type": "int",
         "required": false,
-        "default": 1,
+        "default": "1",
         "desc": "第 1-10 页",
         "hints": [],
         "mode": "search"
@@ -2458,7 +2443,7 @@
         "name": "paper_url",
         "type": "string",
         "required": false,
-        "default": "",
+        "default": "\"\"",
         "desc": "用于检查 README 中的论文链接",
         "hints": [],
         "mode": "inspect"
@@ -2467,7 +2452,7 @@
         "name": "paper_title",
         "type": "string",
         "required": false,
-        "default": "",
+        "default": "\"\"",
         "desc": "用于检查 README 中的论文标题证据",
         "hints": [],
         "mode": "inspect"
@@ -2503,7 +2488,7 @@
         "name": "limit",
         "type": "int",
         "required": false,
-        "default": 10,
+        "default": "10",
         "desc": "每页 1-100 条",
         "hints": [],
         "mode": "search_code"
@@ -2512,7 +2497,7 @@
         "name": "page",
         "type": "int",
         "required": false,
-        "default": 1,
+        "default": "1",
         "desc": "第 1-10 页",
         "hints": [],
         "mode": "search_code"
@@ -2539,7 +2524,7 @@
         "name": "paper_url",
         "type": "string",
         "required": false,
-        "default": "",
+        "default": "\"\"",
         "desc": "DOI、OpenReview 或论文主页链接，用于 README 证据核验",
         "hints": [],
         "mode": "paper_code"
@@ -2548,7 +2533,7 @@
         "name": "keywords",
         "type": "string",
         "required": false,
-        "default": "",
+        "default": "\"\"",
         "desc": "方法名、作者名或框架等补充检索词",
         "hints": [],
         "mode": "paper_code"
@@ -2557,7 +2542,7 @@
         "name": "limit",
         "type": "int",
         "required": false,
-        "default": 10,
+        "default": "10",
         "desc": "返回候选数，1-30",
         "hints": [],
         "mode": "paper_code"
@@ -2566,7 +2551,7 @@
         "name": "inspect_limit",
         "type": "int",
         "required": false,
-        "default": 5,
+        "default": "5",
         "desc": "固定并深度检查的前若干候选，1-limit",
         "hints": [],
         "mode": "paper_code"
@@ -2603,7 +2588,7 @@
         "type": "string",
         "required": true,
         "default": null,
-        "desc": "用一句话描述论文标题或 GitHub 仓库地址",
+        "desc": "例如“查找论文《Are Transformers Effective for Time Series Forecasting?》的官方代码”或“检查仓库 https://github.com/cure-lab/LTSF-Linear”",
         "hints": [],
         "mode": "find"
       },
@@ -2615,6 +2600,24 @@
         "desc": "检查指定仓库时可选的分支、标签或 SHA",
         "hints": [],
         "mode": "find"
+      },
+      {
+        "name": "request",
+        "type": "string",
+        "required": true,
+        "default": null,
+        "desc": "普通回复：配置好了，继续／查看刚才的问题／第二个；也支持恢复编号",
+        "hints": [],
+        "mode": "recover"
+      },
+      {
+        "name": "config_file",
+        "type": "string",
+        "required": false,
+        "default": null,
+        "desc": "后端机器上的受保护配置文件路径，仅用于本次重试，不在对话中提供密码或 Key",
+        "hints": [],
+        "mode": "recover"
       }
     ],
     "modes": [
@@ -2667,6 +2670,11 @@
         "id": "find",
         "name": "自然语言查找",
         "desc": "用一句普通描述查找论文代码或检查指定 GitHub 仓库，并生成可直接交给复现工具的固定快照。"
+      },
+      {
+        "id": "recover",
+        "name": "错误处理与重试",
+        "desc": "查看实际失败原因；配置或修复后按恢复编号重试原任务，不自动切换来源或重放训练提交。"
       }
     ],
     "tags": [
@@ -2683,7 +2691,7 @@
   {
     "id": "code-reproduction",
     "name": "GPU代码复现",
-    "version": "1.5.0",
+    "version": "1.5.4",
     "type": "function",
     "language": "python",
     "status": "active",
@@ -2713,7 +2721,8 @@
             "configure",
             "config_reset",
             "preflight",
-            "benchmark"
+            "benchmark",
+            "recover"
           ],
           "default": "inspect"
         },
@@ -2735,27 +2744,11 @@
     },
     "param_meta": [
       {
-        "name": "mode",
-        "type": "string",
-        "required": false,
-        "default": "inspect",
-        "desc": "选择以下模式",
-        "hints": []
-      },
-      {
-        "name": "register_output",
-        "type": "bool",
-        "required": false,
-        "default": false,
-        "desc": "导出文件时可选登记到平台数据空间，默认为关闭",
-        "hints": []
-      },
-      {
         "name": "request",
         "type": "string",
         "required": true,
         "default": null,
-        "desc": "用一句话说明源码目录或固定快照、启动命令以及可选的 GPU 数量、超时和镜像",
+        "desc": "本地源码须包含目录和命令；使用 snapshot_id 时可省略目录，仅在 README 有唯一候选命令时允许省略命令",
         "hints": [],
         "mode": "reproduce"
       },
@@ -2764,7 +2757,7 @@
         "type": "string",
         "required": false,
         "default": null,
-        "desc": "GitHub 代码查找返回的固定快照 ID；提供时无需本地源码目录",
+        "desc": "GitHub 代码查找工具返回的固定快照 ID；提供时不再填写本地源码目录",
         "hints": [],
         "mode": "reproduce"
       },
@@ -2773,16 +2766,25 @@
         "type": "string",
         "required": false,
         "default": null,
-        "desc": "可选幂等请求键",
+        "desc": "重复提交同一请求时可提供相同键",
         "hints": [],
         "mode": "reproduce"
       },
       {
+        "hints": [],
+        "name": "request",
+        "type": "string",
+        "required": false,
+        "default": null,
+        "desc": "用普通文字说明源码或快照、命令、GPU 和时限；无需 JSON",
+        "mode": "plan"
+      },
+      {
         "name": "plan_json",
         "type": "string",
-        "required": true,
+        "required": false,
         "default": null,
-        "desc": "前序操作返回的 plan_json",
+        "desc": "仅供高级程序调用；与 request 至少提供一个",
         "hints": [],
         "mode": "plan"
       },
@@ -2880,7 +2882,7 @@
         "name": "lines",
         "type": "int",
         "required": false,
-        "default": 200,
+        "default": "200",
         "desc": "1-10000 行",
         "hints": [],
         "mode": "logs"
@@ -2943,7 +2945,7 @@
         "name": "command",
         "type": "string",
         "required": false,
-        "default": "",
+        "default": "\"\"",
         "desc": "拟运行的程序及参数，例如 python train.py",
         "hints": [],
         "mode": "preflight"
@@ -2952,7 +2954,7 @@
         "name": "image",
         "type": "string",
         "required": false,
-        "default": "sotaband-academic-gpu:1.0",
+        "default": "\"sotaband-academic-gpu:1.0\"",
         "desc": "检查运行环境时使用的镜像",
         "hints": [],
         "mode": "preflight"
@@ -2961,7 +2963,7 @@
         "name": "gpu_count",
         "type": "int",
         "required": false,
-        "default": 1,
+        "default": "1",
         "desc": "检查运行环境时要求的 GPU 数量",
         "hints": [],
         "mode": "preflight"
@@ -2970,7 +2972,7 @@
         "name": "check_runtime",
         "type": "bool",
         "required": false,
-        "default": false,
+        "default": "false",
         "desc": "是否实际检查 Docker 镜像和 GPU；默认只做源码静态检查",
         "hints": [],
         "mode": "preflight"
@@ -2983,6 +2985,24 @@
         "desc": "至少两个已结束任务 ID",
         "hints": [],
         "mode": "benchmark"
+      },
+      {
+        "name": "request",
+        "type": "string",
+        "required": true,
+        "default": null,
+        "desc": "普通回复：配置好了，继续／查看刚才的问题／第二个；也支持恢复编号",
+        "hints": [],
+        "mode": "recover"
+      },
+      {
+        "name": "config_file",
+        "type": "string",
+        "required": false,
+        "default": null,
+        "desc": "后端机器上的受保护配置文件路径，仅用于本次重试，不在对话中提供密码或 Key",
+        "hints": [],
+        "mode": "recover"
       }
     ],
     "modes": [
@@ -3080,6 +3100,11 @@
         "id": "benchmark",
         "name": "多次实验汇总",
         "desc": "汇总多个已结束复现任务的数值指标，并检查源码、镜像和命令是否一致。"
+      },
+      {
+        "id": "recover",
+        "name": "错误处理与重试",
+        "desc": "查看实际失败原因；配置或修复后按恢复编号重试原任务，不自动切换来源或重放训练提交。"
       }
     ],
     "tags": [
@@ -3096,7 +3121,7 @@
   {
     "id": "paper-tracker",
     "name": "顶会顶刊论文跟踪",
-    "version": "2.1.0",
+    "version": "2.2.4",
     "type": "function",
     "language": "python",
     "status": "active",
@@ -3128,7 +3153,8 @@
             "diagnose_sources",
             "topics",
             "paper_detail",
-            "related"
+            "related",
+            "recover"
           ],
           "default": "search"
         },
@@ -3150,22 +3176,6 @@
     },
     "param_meta": [
       {
-        "name": "mode",
-        "type": "string",
-        "required": false,
-        "default": "search",
-        "desc": "选择以下模式",
-        "hints": []
-      },
-      {
-        "name": "register_output",
-        "type": "bool",
-        "required": false,
-        "default": false,
-        "desc": "导出文件时可选登记到平台数据空间，默认为关闭",
-        "hints": []
-      },
-      {
         "name": "request",
         "type": "string",
         "required": true,
@@ -3175,10 +3185,19 @@
         "mode": "track"
       },
       {
+        "name": "result_limit",
+        "type": "int",
+        "required": false,
+        "default": "20",
+        "desc": "对话表格展示前 1-100 篇；完整匹配仍写入订阅和摘要",
+        "hints": [],
+        "mode": "track"
+      },
+      {
         "name": "venues",
         "type": "list",
         "required": false,
-        "default": [],
+        "default": "[]",
         "desc": "会议简称或目录 ID 数组；空值选择目录范围内全部",
         "hints": [],
         "mode": "catalog"
@@ -3187,7 +3206,7 @@
         "name": "scope",
         "type": "string",
         "required": false,
-        "default": "all",
+        "default": "\"all\"",
         "desc": "all / ccf_a",
         "hints": [],
         "mode": "catalog"
@@ -3205,7 +3224,7 @@
         "name": "venues",
         "type": "list",
         "required": false,
-        "default": [],
+        "default": "[]",
         "desc": "会议简称或目录 ID 数组；空值选择目录范围内全部",
         "hints": [],
         "mode": "search"
@@ -3214,7 +3233,7 @@
         "name": "query",
         "type": "string",
         "required": false,
-        "default": "",
+        "default": "\"\"",
         "desc": "传给来源的宽召回检索词；省略时从 topic 选择",
         "hints": [],
         "mode": "search"
@@ -3223,7 +3242,7 @@
         "name": "topic",
         "type": "string",
         "required": false,
-        "default": "",
+        "default": "\"\"",
         "desc": "具体研究方向，中英文均可，也支持自定义方向",
         "hints": [],
         "mode": "search"
@@ -3232,7 +3251,7 @@
         "name": "keywords",
         "type": "list",
         "required": false,
-        "default": [],
+        "default": "[]",
         "desc": "额外纳入的关键词或短语",
         "hints": [],
         "mode": "search"
@@ -3241,7 +3260,7 @@
         "name": "exclude_keywords",
         "type": "list",
         "required": false,
-        "default": [],
+        "default": "[]",
         "desc": "标题或摘要命中即排除的词",
         "hints": [],
         "mode": "search"
@@ -3250,7 +3269,7 @@
         "name": "authors",
         "type": "list",
         "required": false,
-        "default": [],
+        "default": "[]",
         "desc": "作者姓名过滤",
         "hints": [],
         "mode": "search"
@@ -3259,7 +3278,7 @@
         "name": "min_relevance",
         "type": "int",
         "required": false,
-        "default": 1,
+        "default": "1",
         "desc": "最低相关性分数，0-100",
         "hints": [],
         "mode": "search"
@@ -3268,7 +3287,7 @@
         "name": "scope",
         "type": "string",
         "required": false,
-        "default": "all",
+        "default": "\"all\"",
         "desc": "all / ccf_a",
         "hints": [],
         "mode": "search"
@@ -3277,7 +3296,7 @@
         "name": "source",
         "type": "string",
         "required": false,
-        "default": "auto",
+        "default": "\"auto\"",
         "desc": "auto / dblp / crossref / openreview / cvf / anthology / jmlr",
         "hints": [],
         "mode": "search"
@@ -3286,7 +3305,7 @@
         "name": "max_pages",
         "type": "int",
         "required": false,
-        "default": 3,
+        "default": "3",
         "desc": "分页源每个会议每年最多 1-100 页，未取完会标记 truncated",
         "hints": [],
         "mode": "search"
@@ -3322,7 +3341,7 @@
         "name": "venues",
         "type": "list",
         "required": false,
-        "default": [],
+        "default": "[]",
         "desc": "会议简称或目录 ID 数组；空值选择目录范围内全部",
         "hints": [],
         "mode": "subscribe"
@@ -3331,7 +3350,7 @@
         "name": "query",
         "type": "string",
         "required": false,
-        "default": "",
+        "default": "\"\"",
         "desc": "关键词",
         "hints": [],
         "mode": "subscribe"
@@ -3340,7 +3359,7 @@
         "name": "topic",
         "type": "string",
         "required": false,
-        "default": "",
+        "default": "\"\"",
         "desc": "持续跟踪的研究方向",
         "hints": [],
         "mode": "subscribe"
@@ -3349,7 +3368,7 @@
         "name": "keywords",
         "type": "list",
         "required": false,
-        "default": [],
+        "default": "[]",
         "desc": "额外纳入词",
         "hints": [],
         "mode": "subscribe"
@@ -3358,7 +3377,7 @@
         "name": "exclude_keywords",
         "type": "list",
         "required": false,
-        "default": [],
+        "default": "[]",
         "desc": "排除词",
         "hints": [],
         "mode": "subscribe"
@@ -3367,7 +3386,7 @@
         "name": "authors",
         "type": "list",
         "required": false,
-        "default": [],
+        "default": "[]",
         "desc": "作者姓名过滤",
         "hints": [],
         "mode": "subscribe"
@@ -3376,7 +3395,7 @@
         "name": "min_relevance",
         "type": "int",
         "required": false,
-        "default": 1,
+        "default": "1",
         "desc": "最低相关性分数，0-100",
         "hints": [],
         "mode": "subscribe"
@@ -3385,7 +3404,7 @@
         "name": "scope",
         "type": "string",
         "required": false,
-        "default": "all",
+        "default": "\"all\"",
         "desc": "all / ccf_a",
         "hints": [],
         "mode": "subscribe"
@@ -3394,7 +3413,7 @@
         "name": "source",
         "type": "string",
         "required": false,
-        "default": "auto",
+        "default": "\"auto\"",
         "desc": "auto / dblp / crossref / openreview / cvf / anthology / jmlr",
         "hints": [],
         "mode": "subscribe"
@@ -3403,7 +3422,7 @@
         "name": "max_pages",
         "type": "int",
         "required": false,
-        "default": 3,
+        "default": "3",
         "desc": "分页源每个会议每年最多 1-100 页，未取完会标记 truncated",
         "hints": [],
         "mode": "subscribe"
@@ -3412,7 +3431,7 @@
         "name": "interval_hours",
         "type": "int",
         "required": false,
-        "default": 24,
+        "default": "24",
         "desc": "同步间隔 1-8760 小时",
         "hints": [],
         "mode": "subscribe"
@@ -3421,7 +3440,7 @@
         "name": "lookback_days",
         "type": "int",
         "required": false,
-        "default": 365,
+        "default": "365",
         "desc": "滚动重扫窗口，覆盖晚索引论文",
         "hints": [],
         "mode": "subscribe"
@@ -3439,7 +3458,7 @@
         "name": "action",
         "type": "string",
         "required": false,
-        "default": "pause",
+        "default": "\"pause\"",
         "desc": "pause / resume",
         "hints": [],
         "mode": "update_subscription"
@@ -3538,10 +3557,28 @@
         "name": "limit",
         "type": "int",
         "required": false,
-        "default": 10,
+        "default": "10",
         "desc": "返回 1-100 篇",
         "hints": [],
         "mode": "related"
+      },
+      {
+        "name": "request",
+        "type": "string",
+        "required": true,
+        "default": null,
+        "desc": "普通回复：配置好了，继续／查看刚才的问题／第二个；也支持恢复编号",
+        "hints": [],
+        "mode": "recover"
+      },
+      {
+        "name": "config_file",
+        "type": "string",
+        "required": false,
+        "default": null,
+        "desc": "后端机器上的受保护配置文件路径，仅用于本次重试，不在对话中提供密码或 Key",
+        "hints": [],
+        "mode": "recover"
       }
     ],
     "modes": [
@@ -3649,6 +3686,11 @@
         "id": "related",
         "name": "相似论文",
         "desc": "在当前用户已索引论文中按标题和摘要词汇查找相似论文。"
+      },
+      {
+        "id": "recover",
+        "name": "错误处理与重试",
+        "desc": "查看实际失败原因；配置或修复后按恢复编号重试原任务，不自动切换来源或重放训练提交。"
       }
     ],
     "tags": [
@@ -3666,7 +3708,7 @@
   {
     "id": "paper-writing",
     "name": "论文撰写",
-    "version": "1.3.0",
+    "version": "1.3.4",
     "type": "function",
     "language": "python",
     "status": "active",
@@ -3696,7 +3738,8 @@
             "config_reset",
             "evidence_matrix",
             "literature_review",
-            "claim_check"
+            "claim_check",
+            "recover"
           ],
           "default": "create"
         },
@@ -3718,22 +3761,6 @@
     },
     "param_meta": [
       {
-        "name": "mode",
-        "type": "string",
-        "required": false,
-        "default": "create",
-        "desc": "选择以下模式",
-        "hints": []
-      },
-      {
-        "name": "register_output",
-        "type": "bool",
-        "required": false,
-        "default": false,
-        "desc": "导出文件时可选登记到平台数据空间，默认为关闭",
-        "hints": []
-      },
-      {
         "name": "title",
         "type": "string",
         "required": true,
@@ -3746,7 +3773,7 @@
         "name": "research_question",
         "type": "string",
         "required": false,
-        "default": "",
+        "default": "\"\"",
         "desc": "研究问题或综述主线",
         "hints": [],
         "mode": "create"
@@ -3755,7 +3782,7 @@
         "name": "target_venue",
         "type": "string",
         "required": false,
-        "default": "",
+        "default": "\"\"",
         "desc": "目标会议或期刊，用于组织写作要求",
         "hints": [],
         "mode": "create"
@@ -3764,7 +3791,7 @@
         "name": "language",
         "type": "string",
         "required": false,
-        "default": "中文",
+        "default": "\"中文\"",
         "desc": "生成内容使用的语言",
         "hints": [],
         "mode": "create"
@@ -3773,7 +3800,7 @@
         "name": "paper_ids",
         "type": "list",
         "required": false,
-        "default": [],
+        "default": "[]",
         "desc": "论文跟踪工具返回的 paper ID 数组",
         "hints": [],
         "mode": "create"
@@ -3782,7 +3809,7 @@
         "name": "report_ids",
         "type": "list",
         "required": false,
-        "default": [],
+        "default": "[]",
         "desc": "论文跟踪工具返回的 digest ID，批量导入其中的具体论文",
         "hints": [],
         "mode": "create"
@@ -3791,7 +3818,7 @@
         "name": "job_ids",
         "type": "list",
         "required": false,
-        "default": [],
+        "default": "[]",
         "desc": "复现任务 ID 数组，保存当前结果快照",
         "hints": [],
         "mode": "create"
@@ -3800,7 +3827,7 @@
         "name": "material_paths",
         "type": "list",
         "required": false,
-        "default": [],
+        "default": "[]",
         "desc": "当前部署机器上的 PDF、Markdown、TXT、JSON 文件路径",
         "hints": [],
         "mode": "create"
@@ -3836,7 +3863,7 @@
         "name": "paper_ids",
         "type": "list",
         "required": false,
-        "default": [],
+        "default": "[]",
         "desc": "论文跟踪工具返回的 paper ID 数组",
         "hints": [],
         "mode": "attach"
@@ -3845,7 +3872,7 @@
         "name": "report_ids",
         "type": "list",
         "required": false,
-        "default": [],
+        "default": "[]",
         "desc": "论文跟踪工具返回的 digest ID",
         "hints": [],
         "mode": "attach"
@@ -3854,7 +3881,7 @@
         "name": "job_ids",
         "type": "list",
         "required": false,
-        "default": [],
+        "default": "[]",
         "desc": "复现任务 ID 数组，保存当前结果快照",
         "hints": [],
         "mode": "attach"
@@ -3863,7 +3890,7 @@
         "name": "material_paths",
         "type": "list",
         "required": false,
-        "default": [],
+        "default": "[]",
         "desc": "当前部署机器上的 PDF、Markdown、TXT、JSON 文件路径",
         "hints": [],
         "mode": "attach"
@@ -3881,7 +3908,7 @@
         "name": "section",
         "type": "string",
         "required": false,
-        "default": "outline",
+        "default": "\"outline\"",
         "desc": "章节名称",
         "hints": [],
         "mode": "outline"
@@ -3908,7 +3935,7 @@
         "name": "section",
         "type": "string",
         "required": false,
-        "default": "draft",
+        "default": "\"draft\"",
         "desc": "章节名称",
         "hints": [],
         "mode": "draft"
@@ -3935,7 +3962,7 @@
         "name": "section",
         "type": "string",
         "required": false,
-        "default": "draft",
+        "default": "\"draft\"",
         "desc": "章节名称",
         "hints": [],
         "mode": "revise"
@@ -4052,7 +4079,7 @@
         "name": "format",
         "type": "string",
         "required": false,
-        "default": "markdown",
+        "default": "\"markdown\"",
         "desc": "markdown / latex / bibtex / docx / pdf / bundle",
         "hints": [],
         "mode": "export"
@@ -4097,7 +4124,7 @@
         "name": "section",
         "type": "string",
         "required": false,
-        "default": "Related Work",
+        "default": "\"Related Work\"",
         "desc": "保存章节名",
         "hints": [],
         "mode": "literature_review"
@@ -4134,7 +4161,7 @@
         "type": "string",
         "required": true,
         "default": null,
-        "desc": "用一句话说明要生成提纲、章节还是文献综述",
+        "desc": "例如“用中文撰写关于时间序列预测的文献综述”或“为《研究标题》生成英文提纲”",
         "hints": [],
         "mode": "compose"
       },
@@ -4143,7 +4170,7 @@
         "type": "string",
         "required": false,
         "default": null,
-        "desc": "可选已有写作项目 ID；省略时自动创建",
+        "desc": "已有项目 ID；省略时自动创建项目",
         "hints": [],
         "mode": "compose"
       },
@@ -4160,7 +4187,7 @@
         "name": "paper_ids",
         "type": "list",
         "required": false,
-        "default": [],
+        "default": "[]",
         "desc": "论文跟踪结果 ID",
         "hints": [],
         "mode": "compose"
@@ -4169,7 +4196,7 @@
         "name": "report_ids",
         "type": "list",
         "required": false,
-        "default": [],
+        "default": "[]",
         "desc": "论文跟踪摘要 ID",
         "hints": [],
         "mode": "compose"
@@ -4178,7 +4205,7 @@
         "name": "job_ids",
         "type": "list",
         "required": false,
-        "default": [],
+        "default": "[]",
         "desc": "代码复现任务 ID",
         "hints": [],
         "mode": "compose"
@@ -4187,10 +4214,28 @@
         "name": "material_paths",
         "type": "list",
         "required": false,
-        "default": [],
+        "default": "[]",
         "desc": "本机材料文件路径",
         "hints": [],
         "mode": "compose"
+      },
+      {
+        "name": "request",
+        "type": "string",
+        "required": true,
+        "default": null,
+        "desc": "普通回复：配置好了，继续／查看刚才的问题／第二个；也支持恢复编号",
+        "hints": [],
+        "mode": "recover"
+      },
+      {
+        "name": "config_file",
+        "type": "string",
+        "required": false,
+        "default": null,
+        "desc": "后端机器上的受保护配置文件路径，仅用于本次重试，不在对话中提供密码或 Key",
+        "hints": [],
+        "mode": "recover"
       }
     ],
     "modes": [
@@ -4288,6 +4333,11 @@
         "id": "compose",
         "name": "自然语言撰写",
         "desc": "用一句普通描述创建或继续写作项目，并自动选择提纲、章节起草或基于证据的文献综述。"
+      },
+      {
+        "id": "recover",
+        "name": "错误处理与重试",
+        "desc": "查看实际失败原因；配置或修复后按恢复编号重试原任务，不自动切换来源或重放训练提交。"
       }
     ],
     "tags": [

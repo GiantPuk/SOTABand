@@ -157,6 +157,59 @@ def test_github_paper_code_ranks_verified_candidate(monkeypatch):
     assert natural["data"]["reproduction_handoff"]["run"]["mode"] == "reproduce"
 
 
+def test_github_paper_code_surfaces_rate_limit_and_provisional_official_candidate(monkeypatch):
+    class RateLimitedGitHub:
+        def search(self, query, limit, page):
+            return (
+                [
+                    {
+                        "repository": "popular/general-library",
+                        "url": "https://github.com/popular/general-library",
+                        "description": "General time series forecasting library",
+                        "stars": 50000,
+                        "license": "MIT",
+                        "archived": False,
+                    },
+                    {
+                        "repository": "authors/paper-code",
+                        "url": "https://github.com/authors/paper-code",
+                        "description": 'Official implementation of "Reliable Method for Forecasting"',
+                        "stars": 100,
+                        "license": "Apache-2.0",
+                        "archived": False,
+                    },
+                ],
+                {"total_count": 2},
+            )
+
+        def inspect(self, name, ref=None, paper_url="", paper_title=""):
+            raise github.ToolError(
+                "api.github.com: HTTP 403",
+                "RATE_LIMITED",
+                True,
+                {"x-ratelimit-remaining": "0"},
+            )
+
+    monkeypatch.setattr(github, "GitHub", RateLimitedGitHub)
+    response = github.execute(
+        {"mode": "paper_code", "paper_title": "Reliable Method for Forecasting"}
+    )
+
+    first = response["data"]["items"][0]
+    assert first["repository"] == "authors/paper-code"
+    assert first["relationship"] == "metadata_author_claimed"
+    assert first["verification_status"] == "rate_limited"
+    assert response["data"]["recommended"] is None
+    assert response["data"]["provisional_recommendation"]["repository"] == "authors/paper-code"
+    assert response["data"]["verification_summary"] == {
+        "requested": 2,
+        "verified": 0,
+        "rate_limited": True,
+        "authenticated": False,
+    }
+    assert "incomplete" in response["message"]
+
+
 def test_github_plain_discovery_request():
     paper = github.parse_discovery_request("帮我查找论文《Are Transformers Effective for Time Series Forecasting?》的官方代码")
     assert paper["kind"] == "paper"
@@ -254,6 +307,21 @@ def test_plain_tracking_request_selects_direction_and_venues(store):
     assert parsed["interval_hours"] == 168
 
 
+def test_tracking_request_preserves_llm_reasoning_subtopic(store):
+    parsed = papers.parse_tracking_request(
+        "持续跟踪 ACL、EMNLP 2025年以来的大语言模型推理方向论文，每周更新", store
+    )
+    assert parsed["topic"] == "大语言模型推理"
+    profile = papers.topic_profile(parsed["topic"])
+    assert profile["id"] == "llm_reasoning"
+    relevant = sample(
+        abstract="We study chain of thought reasoning in large language models."
+    )
+    broad_llm = sample(abstract="We align a large language model with human preferences.")
+    assert papers.score_paper(relevant, profile)["relevance_score"] > 0
+    assert papers.score_paper(broad_llm, profile)["relevance_score"] == 0
+
+
 def test_track_mode_returns_concrete_papers_and_subscription(monkeypatch):
     paper = sample(abstract="time series forecasting")
 
@@ -268,9 +336,46 @@ def test_track_mode_returns_concrete_papers_and_subscription(monkeypatch):
     )
     assert response["data"]["items"][0]["title"] == "A Reliable Method"
     assert response["data"]["subscription"]["settings"]["topic"] == "时间序列"
-    assert response["data"]["report"]["paper_ids"]
+    assert response["data"]["report"]["paper_count"] == 1
     assert response["data"]["handoffs"]["writing"]["params"]["report_ids"]
     assert response["data"]["handoffs"]["code_search"][0]["mode"] == "find"
+
+
+def test_track_limits_chat_payload_but_persists_all_matches(monkeypatch):
+    matches = [
+        {
+            **sample(),
+            "id": f"paper-{index}",
+            "title": f"Reasoning Paper {index}",
+            "relevance_score": 6,
+            "matched_terms": ["reasoning"],
+        }
+        for index in range(25)
+    ]
+
+    monkeypatch.setattr(
+        papers,
+        "search",
+        lambda settings, store: (
+            matches,
+            [{"venue": "conf-acl", "source": "anthology", "state": "success"}],
+            [paper["id"] for paper in matches],
+        ),
+    )
+    response = papers.execute(
+        {"mode": "track", "request": "持续跟踪 ACL 的大语言模型推理论文"}
+    )
+    assert len(response["data"]["items"]) == 20
+    assert response["data"]["total_matches"] == 25
+    assert response["data"]["displayed_matches"] == 20
+    assert response["data"]["report"]["paper_count"] == 25
+    assert "paper_snapshots" not in response["data"]["report"]
+    assert "paper_ids" not in response["data"]["report"]
+    assert response["data"]["subscription"]["seen_paper_count"] == 25
+    assert "seen_paper_ids" not in response["data"]["subscription"]
+    persisted = papers.Store().get("digest", response["data"]["report"]["id"])
+    assert len(persisted["paper_snapshots"]) == 25
+    assert len(persisted["paper_ids"]) == 25
 
 
 @pytest.mark.parametrize("action", ["pause", "delete"])
@@ -328,6 +433,48 @@ def test_anthology_filters_short_and_preserves_markup():
     assert not truncated
     assert rows[0]["title"] == "A GPU Method" and rows[0]["ccf_rank"] == "A"
     assert rows[1]["track"] == "short" and rows[1]["ccf_rank"] is None
+
+
+def test_anthology_uses_official_raw_collections_and_skips_unpublished_year():
+    xml = '<collection><volume id="long"><paper id="1"><title>Reasoning Paper</title></paper></volume></collection>'
+    calls = []
+
+    def get(url, **kwargs):
+        calls.append(url)
+        if "2026.acl.xml" in url:
+            raise ToolError(
+                "raw.githubusercontent.com: HTTP 404",
+                "SOURCE_HTTP_ERROR",
+                details={"http_status": 404},
+            )
+        return xml
+
+    rows, truncated = papers.Sources(SimpleNamespace(get=get)).anthology(
+        catalog.selected(["ACL"])[0], "", "2025-01-01", "2026-12-31"
+    )
+    assert not truncated and len(rows) == 1
+    assert calls[0].endswith("/master/data/xml/2025.acl.xml")
+
+
+def test_track_all_sources_failed_does_not_claim_zero_papers(monkeypatch):
+    def failed_search(settings, store):
+        return [], [
+            {
+                "venue": "conf-acl",
+                "source": "anthology",
+                "state": "failed",
+                "error": "source unavailable",
+            }
+        ], []
+
+    monkeypatch.setattr(papers, "search", failed_search)
+    response = papers.execute(
+        {"mode": "track", "request": "持续跟踪 ACL 的大语言模型推理论文"}
+    )
+    assert response["data"]["retrieval_status"] == "failed"
+    assert not response["data"]["paper_count_known"]
+    assert "paper count is unknown" in response["message"]
+    assert "0 matching papers" not in response["message"]
 
 
 def test_partial_source_failure_is_visible(store):

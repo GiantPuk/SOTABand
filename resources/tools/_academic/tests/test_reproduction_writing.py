@@ -53,29 +53,19 @@ def test_plain_reproduction_request_parsing():
     assert parsed["plan"]["image"] == "research/pytorch:2.5"
 
 
-def test_plain_reproduction_creates_plan_and_starts_job(tmp_path, monkeypatch):
+def test_plain_reproduction_blocks_unprepared_source(tmp_path, store):
     source = tmp_path / "paper code"
     source.mkdir()
     (source / "train.py").write_text("print('ok')", encoding="utf-8")
 
-    def start(store, ident):
-        job = store.get("job", ident)
-        job["state"] = "running"
-        return store.put("job", job)
-
-    monkeypatch.setattr(rep, "advance", start)
-    response = rep.execute(
-        {
-            "mode": "reproduce",
-            "request": f'复现 "{source}" 中的代码，使用1张GPU运行 python train.py，超时120秒。',
-        }
-    )
-    data = response["data"]
-    assert data["state"] == "running"
-    assert data["plan"]["command"] == ["python", "train.py"]
-    assert data["plan"]["timeout_seconds"] == 120
-    assert data["snapshot"]["local_path"] == str(source.resolve())
-    assert data["interpreted_request"]["source_path"] == str(source)
+    with pytest.raises(ToolError, match="preflight failed"):
+        rep.execute(
+            {
+                "mode": "reproduce",
+                "request": f'复现 "{source}" 中的代码，使用1张GPU运行 python train.py，超时120秒。',
+            }
+        )
+    assert store.find("job") == []
 
 
 def test_plain_reproduction_consumes_github_snapshot(store, monkeypatch):
